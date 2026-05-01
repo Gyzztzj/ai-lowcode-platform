@@ -1,0 +1,7 @@
+export enum ModelType {
+  CHAT = 'CHAT',
+  VISION = 'VISION',
+  MULTIMODAL = 'MULTIMODAL',
+  AUDIO = 'AUDIO',
+  EMBEDDING = 'EMBEDDING',
+}
