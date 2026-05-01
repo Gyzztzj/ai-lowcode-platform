@@ -79,8 +79,8 @@ const NodePropertiesDialog = ({
           if (predNode && predNode.type !== "start") {
             result.push({
               id: predNode.id,
-              label: (predNode.data.label as string) || predNode.type,
-              type: predNode.type,
+              label: (predNode.data.label as string) || predNode.type || "",
+              type: predNode.type || "",
             });
           }
           queue.push(predId);
@@ -133,7 +133,9 @@ const NodePropertiesDialog = ({
   };
 
   const insertVariable = (
-    ref: React.RefObject<HTMLTextAreaElement | HTMLInputElement>,
+    ref:
+      | React.RefObject<HTMLTextAreaElement | null>
+      | React.RefObject<HTMLInputElement | null>,
     varName: string,
     field: "systemPrompt" | "prompt" | "content" | "query",
   ) => {
@@ -173,7 +175,9 @@ const NodePropertiesDialog = ({
   );
 
   const renderVariableHelper = (
-    ref: React.RefObject<HTMLTextAreaElement | HTMLInputElement>,
+    ref:
+      | React.RefObject<HTMLTextAreaElement | null>
+      | React.RefObject<HTMLInputElement | null>,
     field: "systemPrompt" | "prompt" | "content" | "query",
   ) => (
     <div className="mt-3 border rounded-lg p-3 bg-gray-50">

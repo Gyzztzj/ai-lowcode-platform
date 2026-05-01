@@ -20,7 +20,7 @@ const Share = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [thinkingSeconds, setThinkingSeconds] = useState(0);
-  const thinkingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const thinkingIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (shareId) {
