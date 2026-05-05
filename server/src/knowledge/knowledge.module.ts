@@ -8,6 +8,7 @@ import { KnowledgeService } from './knowledge.service';
 import { KnowledgeController } from './knowledge.controller';
 import { WebCrawlerService } from './web-crawler.service';
 import { AiModule } from '../ai/ai.module';
+import { RAGModule } from '../rag/rag.module';
 import { KnowledgeBase, Document, Chunk } from '../entities';
 import { ChunkRepository } from '../repositories/chunk.repository';
 
@@ -15,6 +16,7 @@ import { ChunkRepository } from '../repositories/chunk.repository';
   imports: [
     TypeOrmModule.forFeature([KnowledgeBase, Document, Chunk]),
     AiModule,
+    RAGModule,
   ],
   controllers: [KnowledgeController],
   providers: [KnowledgeService, WebCrawlerService, ChunkRepository],
