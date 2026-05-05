@@ -60,6 +60,7 @@ export class AuthService {
       email: savedUser.email,
       name: savedUser.name,
       role: savedUser.role,
+      permissions: savedUser.permissions,
       createdAt: savedUser.createdAt,
     };
 
@@ -96,6 +97,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
+        permissions: user.permissions,
         createdAt: user.createdAt,
       },
       ...tokens,

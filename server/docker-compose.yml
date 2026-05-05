@@ -33,12 +33,12 @@ services:
       timeout: 5s
       retries: 5
 
-  api:
-    image: ai-lowcode-platform
+  server:
+    image: ai-lowcode-server
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ai-lowcode-api
+    container_name: ai-lowcode-server
     ports:
       - '${PORT:-3000}:${PORT:-3000}'
     env_file:
@@ -62,4 +62,6 @@ services:
 
 volumes:
   postgres_data:
+    name: ai-lowcode-postgres-data
   redis_data:
+    name: ai-lowcode-redis-data
