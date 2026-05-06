@@ -13,6 +13,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
+  // 根路径重定向到 Swagger 文档
+  const httpAdapter = app.getHttpAdapter();
+  httpAdapter.get('/', (req, res) => {
+    res.redirect('/api/docs');
+  });
+
   // 全局前缀
   app.setGlobalPrefix('api');
 

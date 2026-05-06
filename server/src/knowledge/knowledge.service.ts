@@ -10,6 +10,7 @@ import { CreateKnowledgeBaseDto } from './dto/create-knowledge-base.dto';
 import { EmbeddingService } from '../ai/embedding.service';
 import { RerankerService } from '../ai/reranker.service';
 import { WebCrawlerService } from './web-crawler.service';
+import { TextSplitterService } from '../rag/domain/services/text-splitter.service';
 import {
   unlinkSync,
   existsSync,
@@ -36,6 +37,7 @@ export class KnowledgeService {
     private embeddingService: EmbeddingService,
     private rerankerService: RerankerService,
     private webCrawlerService: WebCrawlerService,
+    private textSplitterService: TextSplitterService,
   ) {
     // 创建上传目录
     if (!existsSync(this.uploadDir)) {
@@ -393,8 +395,7 @@ export class KnowledgeService {
           status: DocumentStatus.FAILED,
           chunkCount: 0,
         });
-      } catch (updateError) {
-      }
+      } catch (updateError) {}
     }
   }
 
@@ -412,8 +413,7 @@ export class KnowledgeService {
           status: DocumentStatus.FAILED,
           chunkCount: 0,
         });
-      } catch (updateError) {
-      }
+      } catch (updateError) {}
     }
   }
 
@@ -427,9 +427,9 @@ export class KnowledgeService {
       text = `来源: ${source}\n虽然未能提取到有效文本内容，但已为您创建文档记录。`;
     }
 
-    const textChunks = this.splitTextIntoChunks(text);
+    const chunks = this.textSplitterService.splitText(text);
 
-    if (textChunks.length === 0) {
+    if (chunks.length === 0) {
       await this.documentRepository.update(documentId, {
         status: DocumentStatus.FAILED,
         chunkCount: 0,
@@ -439,21 +439,20 @@ export class KnowledgeService {
 
     let successCount = 0;
 
-    for (let i = 0; i < textChunks.length; i++) {
-      const content = textChunks[i];
-
+    for (const chunk of chunks) {
       try {
-        const vector = await this.embeddingService.createEmbedding(content);
+        const vector = await this.embeddingService.createEmbedding(
+          chunk.content,
+        );
 
         await this.chunkRepository.saveChunkWithVector({
-          content,
+          content: chunk.content,
           vector,
           documentId,
         });
 
         successCount++;
-      } catch (chunkError) {
-      }
+      } catch (chunkError) {}
     }
 
     await this.documentRepository.update(documentId, {
@@ -482,8 +481,7 @@ export class KnowledgeService {
     if (document.filePath && existsSync(document.filePath)) {
       try {
         unlinkSync(document.filePath);
-      } catch (e) {
-      }
+      } catch (e) {}
     }
 
     await this.documentRepository.delete(documentId);
