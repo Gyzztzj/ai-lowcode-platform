@@ -4,7 +4,7 @@ import { authApi } from "./api-client";
 import { useUserStore } from "@/store/userStore";
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 120000, // 增加到 120 秒，因为大模型请求可能需要更长时间
 });
 

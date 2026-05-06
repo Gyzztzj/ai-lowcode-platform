@@ -1,0 +1,82 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg18
+    container_name: ai-lowcode-postgres
+    env_file:
+      - .env.docker
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - POSTGRES_DB=${POSTGRES_DB:-ai-lowcode-platform}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/init-db:/docker-entrypoint-initdb.d
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai-lowcode-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    image: ai-lowcode-server:latest
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: ai-lowcode-server
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.docker
+    environment:
+      - PORT=3000
+      - NODE_ENV=${NODE_ENV:-development}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-ai-lowcode-platform}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3001}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DOUBAO_API_KEY=${DOUBAO_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+
+  web:
+    image: ai-lowcode-web:latest
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-}
+    container_name: ai-lowcode-web
+    ports:
+      - "3001:80"
+    depends_on:
+      - server
+    restart: always
+
+volumes:
+  postgres_data:
+    name: ai-lowcode-postgres-data
+  redis_data:
+    name: ai-lowcode-redis-data
