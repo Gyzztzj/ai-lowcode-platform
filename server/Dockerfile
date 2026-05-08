@@ -26,7 +26,7 @@ WORKDIR /app
 
 # 同样配置 npm 镜像，再装 pnpm
 RUN npm config set registry https://registry.npmmirror.com
-RUN npm install -g pnpm@latest
+RUN npm install -g pnpm@9
 
 # 配置 pnpm 镜像
 RUN pnpm config set registry https://registry.npmmirror.com
