@@ -1,3 +1,6 @@
+/**
+ * 速率限制服务
+ */
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { RedisService } from '../redis/redis.service';
 
@@ -5,6 +8,13 @@ import { RedisService } from '../redis/redis.service';
 export class RateLimitService {
   constructor(private redisService: RedisService) {}
 
+  /**
+   * 检查速率限制
+   * @param identifier 速率限制标识符
+   * @param limit 最大请求次数
+   * @param windowSeconds 时间窗口（秒）
+   * @returns 包含是否允许、剩余请求次数和重置时间的对象
+   */
   async checkRateLimit(
     identifier: string,
     limit: number,
@@ -40,6 +50,13 @@ export class RateLimitService {
     };
   }
 
+  /**
+   * 强制执行速率限制
+   * @param identifier 速率限制标识符
+   * @param limit 最大请求次数
+   * @param windowSeconds 时间窗口（秒）
+   * @returns 无
+   */
   async enforceRateLimit(
     identifier: string,
     limit: number,
@@ -58,6 +75,13 @@ export class RateLimitService {
     }
   }
 
+  /**
+   * 设置断路器阈值
+   * @param serviceName 服务名称
+   * @param threshold 断路器阈值
+   * @param windowSeconds 时间窗口（秒）
+   * @returns 无
+   */
   async setCircuitBreaker(
     serviceName: string,
     threshold: number,
@@ -78,6 +102,11 @@ export class RateLimitService {
     );
   }
 
+  /**
+   * 记录失败
+   * @param serviceName 服务名称
+   * @returns 是否触发断路器的布尔值
+   */
   async recordFailure(serviceName: string): Promise<boolean> {
     const key = `circuit_breaker:${serviceName}`;
     const client = this.redisService.getClient();
@@ -103,12 +132,22 @@ export class RateLimitService {
     return false;
   }
 
+  /**
+   * 检查断路器是否打开
+   * @param serviceName 服务名称
+   * @returns 是否打开的布尔值
+   */
   async isCircuitBreakerOpen(serviceName: string): Promise<boolean> {
     const key = `circuit_breaker:${serviceName}`;
     const data = await this.redisService.getClient().hgetall(key);
     return data?.open === 'true';
   }
 
+  /**
+   * 重置断路器
+   * @param serviceName 服务名称
+   * @returns 无
+   */
   async resetCircuitBreaker(serviceName: string): Promise<void> {
     const key = `circuit_breaker:${serviceName}`;
     const client = this.redisService.getClient();

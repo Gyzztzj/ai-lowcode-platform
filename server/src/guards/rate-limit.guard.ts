@@ -1,3 +1,6 @@
+/**
+ * 速率限制守卫
+ */
 import {
   Injectable,
   CanActivate,
@@ -18,6 +21,11 @@ export class RateLimitGuard implements CanActivate {
     private rateLimitService: RateLimitService,
   ) {}
 
+  /**
+   * 检查请求是否符合速率限制
+   * @param context 执行上下文
+   * @returns 是否符合速率限制
+   */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const rateLimitOptions = this.reflector.get<{
       limit: number;

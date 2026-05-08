@@ -1,8 +1,10 @@
+/**
+ * 条件执行器
+ */
 import { Injectable } from '@nestjs/common';
 import { BaseExecutor } from './base.executor';
 import { FlowNode, ExecutionContext } from '../flow/flow.types';
 import { ExpressionEvaluator } from '../utils/expression-evaluator.util';
-import { TemplateEngine } from '../utils/template-engine.util';
 
 @Injectable()
 export class ConditionExecutor extends BaseExecutor {
@@ -10,6 +12,12 @@ export class ConditionExecutor extends BaseExecutor {
     super();
   }
 
+  /**
+   * 执行条件节点
+   * @param node 条件节点
+   * @param context 执行上下文
+   * @returns 更新后的执行上下文
+   */
   async execute(
     node: FlowNode,
     context: ExecutionContext,
@@ -84,6 +92,12 @@ export class ConditionExecutor extends BaseExecutor {
     return newContext;
   }
 
+  /**
+   * 评估条件表达式
+   * @param expression 条件表达式
+   * @param context 执行上下文
+   * @returns 是否匹配
+   */
   private evaluateCondition(
     expression: string,
     context: Record<string, any>,
@@ -113,6 +127,12 @@ export class ConditionExecutor extends BaseExecutor {
     }
   }
 
+  /**
+   * 插值变量表达式中的 {{variable}}
+   * @param expression 表达式
+   * @param context 执行上下文
+   * @returns 插值后的表达式
+   */
   private interpolateVariables(
     expression: string,
     context: Record<string, any>,
@@ -138,6 +158,12 @@ export class ConditionExecutor extends BaseExecutor {
     return result;
   }
 
+  /**
+   * 获取嵌套对象的值
+   * @param obj 对象
+   * @param path 路径，例如 'a.b.c'
+   * @returns 嵼
+   */
   private getNestedValue(obj: Record<string, any>, path: string): any {
     return path.split('.').reduce((current, key) => {
       if (current && typeof current === 'object' && key in current) {
@@ -147,6 +173,12 @@ export class ConditionExecutor extends BaseExecutor {
     }, obj);
   }
 
+  /**
+   * 尝试简单比较（支持 contains）
+   * @param expression 表达式
+   * @param context 执行上下文
+   * @returns 是否匹配
+   */
   private trySimpleComparison(
     expression: string,
     context: Record<string, any>,
@@ -181,6 +213,12 @@ export class ConditionExecutor extends BaseExecutor {
     return this.evaluateSingleCondition(expression, context);
   }
 
+  /**
+   * 评估单个条件表达式
+   * @param expression 条件表达式
+   * @param context 执行上下文
+   * @returns 是否匹配
+   */
   private evaluateSingleCondition(
     expression: string,
     context: Record<string, any>,
@@ -219,6 +257,12 @@ export class ConditionExecutor extends BaseExecutor {
     return null;
   }
 
+  /**
+   * 解析值为实际类型
+   * @param value 原始值
+   * @param context 执行上下文
+   * @returns 解析后的值
+   */
   private resolveValue(value: string, context: Record<string, any>): any {
     // 检查是否是字符串字面量
     if (

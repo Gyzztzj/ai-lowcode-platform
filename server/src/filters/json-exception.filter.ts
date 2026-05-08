@@ -1,3 +1,6 @@
+/**
+ * JSON异常过滤器
+ */
 import {
   ExceptionFilter,
   Catch,
@@ -39,19 +42,14 @@ export class JsonExceptionFilter implements ExceptionFilter {
             : 'Internal server error';
 
       let code = ErrorCode.SYSTEM_ERROR;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
       if (status === HttpStatus.UNAUTHORIZED) {
         code = ErrorCode.UNAUTHORIZED;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
       } else if (status === HttpStatus.FORBIDDEN) {
         code = ErrorCode.PERMISSION_DENIED;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
       } else if (status === HttpStatus.NOT_FOUND) {
         code = ErrorCode.RESOURCE_NOT_FOUND;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
       } else if (status === HttpStatus.BAD_REQUEST) {
         code = ErrorCode.VALIDATION_ERROR;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
       } else if (status === HttpStatus.TOO_MANY_REQUESTS) {
         code = ErrorCode.RATE_LIMIT_EXCEEDED;
       }

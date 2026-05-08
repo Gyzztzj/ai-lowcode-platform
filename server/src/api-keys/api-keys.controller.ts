@@ -1,3 +1,6 @@
+/**
+ * API密钥控制器（用于管理API密钥）
+ */
 import {
   Controller,
   Get,

@@ -1,3 +1,6 @@
+/**
+ * 流验证管道（用于验证请求体）
+ */
 import { PipeTransform, Injectable, ArgumentMetadata } from '@nestjs/common';
 import { validate } from 'class-validator';
 import { plainToClass } from 'class-transformer';

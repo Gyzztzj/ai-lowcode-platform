@@ -1,3 +1,6 @@
+/**
+ * 上下文管理服务
+ */
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,6 +15,14 @@ export class ContextManagerService {
     private workflowSessionRepository: Repository<WorkflowSession>,
   ) {}
 
+  /**
+   * 创建工作流会话
+   * @param userId 用户ID
+   * @param appId 应用ID
+   * @param initialState 初始状态（可选）
+   * @param ttlSeconds 过期时间（秒，默认 86400 秒）
+   * @returns 创建的会话
+   */
   async createSession(
     userId: string,
     appId: string,
@@ -37,12 +48,23 @@ export class ContextManagerService {
     return this.workflowSessionRepository.save(session);
   }
 
+  /**
+   * 获取工作流会话
+   * @param sessionId 会话ID
+   * @returns 会话（如果存在）
+   */
   async getSession(sessionId: string): Promise<WorkflowSession | null> {
     return this.workflowSessionRepository.findOne({
       where: { sessionId },
     });
   }
 
+  /**
+   * 获取用户的工作流会话
+   * @param userId 用户ID
+   * @param sessionId 会话ID
+   * @returns 会话（如果存在）
+   */
   async getSessionByUser(
     userId: string,
     sessionId: string,
@@ -52,6 +74,12 @@ export class ContextManagerService {
     });
   }
 
+  /**
+   * 更新工作流会话
+   * @param sessionId 会话ID
+   * @param updates 更新字段
+   * @returns 更新后的会话（如果存在）
+   */
   async updateSession(
     sessionId: string,
     updates: Partial<WorkflowSession>,
@@ -65,6 +93,12 @@ export class ContextManagerService {
     return this.workflowSessionRepository.save(session);
   }
 
+  /**
+   * 保存上下文执行状态
+   * @param sessionId 会话ID
+   * @param context 上下文执行状态
+   * @returns 更新后的会话（如果存在）
+   */
   async saveExecutionContext(
     sessionId: string,
     context: ExecutionContext,
@@ -87,6 +121,11 @@ export class ContextManagerService {
     return this.workflowSessionRepository.save(session);
   }
 
+  /**
+   * 恢复上下文执行状态
+   * @param sessionId 会话ID
+   * @returns 上下文执行状态（如果存在）
+   */
   async restoreExecutionContext(
     sessionId: string,
   ): Promise<ExecutionContext | null> {
@@ -108,14 +147,30 @@ export class ContextManagerService {
     };
   }
 
+  /**
+   * 完成工作流会话
+   * @param sessionId 会话ID
+   * @returns 更新后的会话（如果存在）
+   */
   async completeSession(sessionId: string): Promise<WorkflowSession | null> {
     return this.updateSession(sessionId, { isCompleted: true });
   }
 
+  /**
+   * 删除工作流会话
+   * @param sessionId 会话ID
+   */
   async deleteSession(sessionId: string): Promise<void> {
     await this.workflowSessionRepository.delete({ sessionId });
   }
 
+  /**
+   * 获取用户的工作流会话
+   * @param userId 用户ID
+   * @param appId 应用ID（可选）
+   * @param limit 会话数量限制（默认 50）
+   * @returns 用户的工作流会话列表
+   */
   async getUserSessions(
     userId: string,
     appId?: string,
@@ -135,6 +190,10 @@ export class ContextManagerService {
     return query.getMany();
   }
 
+  /**
+   * 清理过期的工作流会话
+   * @returns 清理的会话数量
+   */
   async cleanupExpiredSessions(): Promise<number> {
     const result = await this.workflowSessionRepository
       .createQueryBuilder()
@@ -145,6 +204,13 @@ export class ContextManagerService {
     return result.affected || 0;
   }
 
+  /**
+   * 设置会话变量
+   * @param sessionId 会话ID
+   * @param key 变量键
+   * @param value 变量值
+   * @returns 更新后的会话（如果存在）
+   */
   async setVariable(
     sessionId: string,
     key: string,
@@ -161,6 +227,12 @@ export class ContextManagerService {
     return this.workflowSessionRepository.save(session);
   }
 
+  /**
+   * 获取会话变量
+   * @param sessionId 会话ID
+   * @param key 变量键
+   * @returns 变量值（如果存在）
+   */
   async getVariable(sessionId: string, key: string): Promise<any> {
     const session = await this.getSession(sessionId);
     if (!session || !session.variables) {
@@ -170,6 +242,13 @@ export class ContextManagerService {
     return session.variables[key];
   }
 
+  /**
+   * 设置全局变量
+   * @param userId 用户ID
+   * @param key 变量键
+   * @param value 变量值
+   * @returns 更新后的会话（如果存在）
+   */
   async setGlobalVariable(
     userId: string,
     key: string,

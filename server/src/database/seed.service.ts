@@ -1,3 +1,6 @@
+/**
+ * 数据库种子服务
+ */
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -22,11 +25,17 @@ export class SeedService implements OnModuleInit {
     private configService: ConfigService,
   ) {}
 
+  /**
+   * 初始化数据库种子
+   */
   async onModuleInit() {
     await this.seedAdminUser();
     await this.seedDefaultModels();
   }
 
+  /**
+   * 种子管理员用户
+   */
   private async seedAdminUser() {
     const adminEmail = 'admin@admin.com';
     const adminPassword = 'Admin123!';
@@ -52,6 +61,9 @@ export class SeedService implements OnModuleInit {
     await this.userRepository.save(adminUser);
   }
 
+  /**
+   * 种子默认模型
+   */
   private async seedDefaultModels() {
     const doubaoApiKey = this.configService.get('DOUBAO_CHAT_API_KEY');
     const doubaoModel = this.configService.get('DOUBAO_DEFAULT_CHAT_MODEL');

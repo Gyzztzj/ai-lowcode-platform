@@ -1,13 +1,18 @@
 import { Controller, Post, Body, UseGuards, Get, Res } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { ChatDto } from './dto/chat.dto';
+import { RerankDto } from './dto/rerank.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import type { Response } from 'express';
+import { RerankerService } from './reranker.service';
 
 @Controller('ai')
 @UseGuards(JwtAuthGuard)
 export class AiController {
-  constructor(private aiService: AiService) {}
+  constructor(
+    private aiService: AiService,
+    private rerankerService: RerankerService,
+  ) {}
 
   // 普通对话
   @Post('chat')
@@ -43,6 +48,28 @@ export class AiController {
   getAvailableModels() {
     return {
       models: this.aiService.getAvailableModels(),
+    };
+  }
+
+  // 重排序
+  @Post('rerank')
+  async rerank(@Body() rerankDto: RerankDto) {
+    const { query, documents, model, topN, returnDocuments, instruct } =
+      rerankDto;
+    const results = await this.rerankerService.rerank(query, documents, {
+      model,
+      topN,
+      returnDocuments,
+      instruct,
+    });
+    return { results };
+  }
+
+  // 获取可用的 rerank 模型
+  @Get('rerank/models')
+  getAvailableRerankModels() {
+    return {
+      models: this.rerankerService.getAvailableModels(),
     };
   }
 }

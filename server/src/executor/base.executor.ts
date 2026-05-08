@@ -1,3 +1,6 @@
+/**
+ * 基础执行器
+ */
 import { FlowNode, ExecutionContext, NodeExecutor } from '../flow/flow.types';
 import { TemplateEngine } from '../utils/template-engine.util';
 

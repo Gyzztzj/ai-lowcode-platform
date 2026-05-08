@@ -12,7 +12,6 @@ import {
   ApiTags,
   ApiBearerAuth,
   ApiQuery,
-  ApiResponse,
 } from '@nestjs/swagger';
 
 @ApiTags('Audit')

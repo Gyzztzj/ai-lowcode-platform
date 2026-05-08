@@ -1,3 +1,6 @@
+/**
+ * 对话服务
+ */
 import {
   Injectable,
   NotFoundException,
@@ -372,8 +375,7 @@ export class ConversationsService {
         try {
           await this.saveAssistantMessage(id, fullContent);
           await this.touchConversation(id);
-        } catch (error) {
-        }
+        } catch (error) {}
       })();
     } else {
       const messages = this.buildMessages(
@@ -420,8 +422,7 @@ export class ConversationsService {
           try {
             await this.saveAssistantMessage(id, fullContent);
             await this.touchConversation(id);
-          } catch (error) {
-          }
+          } catch (error) {}
         })();
       });
 

@@ -31,7 +31,9 @@
 
 2. 打开 `.env.docker`，填入你的配置：
    - **必须配置**：把 `OPENAI_API_KEY` 或 `DOUBAO_API_KEY` 改成你真实的 Key
+   - **推荐配置**：填入 `DASHSCOPE_CHAT_API_KEY` 以启用 rerank 功能
    - **建议修改**：把 `JWT_SECRET` 改成强密码
+   - **可选配置**：`RERANK_DEFAULT_MODEL` 默认是 `qwen3-rerank`，也可以改成 `qwen3-vl-rerank` 或 `gte-rerank-v2`
    - **前端配置**：Docker 部署时建议设置 `VITE_API_URL=http://localhost:3000`
    - **其他配置**：数据库配置可以保持默认
 

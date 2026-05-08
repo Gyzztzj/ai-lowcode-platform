@@ -24,6 +24,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
+  /**
+   * 验证 JWT 令牌
+   * @param payload JWT 令牌有效载荷
+   * @returns 验证结果
+   */
   async validate(payload: { sub: string; email: string }) {
     if (!validate(payload.sub)) {
       throw new UnauthorizedException('无效的用户ID');

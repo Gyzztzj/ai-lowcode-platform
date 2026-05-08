@@ -1,3 +1,6 @@
+/**
+ * 多向量嵌入服务
+ */
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
@@ -5,9 +8,6 @@ import {
   EmbeddingProvider,
   EmbeddingProviderConfig,
   EmbeddingInput,
-  RetrievalQuery,
-  RetrievalResult,
-  AggregatedRetrievalResult,
 } from './embedding-provider.interface';
 
 @Injectable()
@@ -28,6 +28,9 @@ export class MultiEmbeddingService {
     this.initializeProviders();
   }
 
+  /**
+   * 初始化嵌入提供程序
+   */
   private initializeProviders() {
     const configs = this.loadProviderConfigs();
 
@@ -49,6 +52,10 @@ export class MultiEmbeddingService {
     this.logProviderStatus();
   }
 
+  /**
+   * 从配置加载嵌入提供程序配置
+   * @returns 嵌入提供程序配置数组
+   */
   private loadProviderConfigs(): EmbeddingProviderConfig[] {
     return [
       {
@@ -92,6 +99,9 @@ export class MultiEmbeddingService {
     ];
   }
 
+  /**
+   * 记录当前可用的嵌入提供程序状态
+   */
   private logProviderStatus() {
     this.providers.forEach((provider, index) => {
       const status = index === this.currentProviderIndex ? ' [CURRENT]' : '';
@@ -99,6 +109,11 @@ export class MultiEmbeddingService {
     });
   }
 
+  /**
+   * 检查指定嵌入提供程序是否已打开断路器
+   * @param providerName 嵌入提供程序名称
+   * @returns 是否已打开断路器
+   */
   private isCircuitBreakerOpen(providerName: string): boolean {
     const breaker = this.circuitBreakers.get(providerName);
     if (!breaker || !breaker.open) return false;
@@ -111,6 +126,10 @@ export class MultiEmbeddingService {
     return true;
   }
 
+  /**
+   * 记录指定嵌入提供程序的失败次数
+   * @param providerName 嵌入提供程序名称
+   */
   private recordFailure(providerName: string) {
     const count = (this.failureCounts.get(providerName) || 0) + 1;
     this.failureCounts.set(providerName, count);
@@ -124,10 +143,22 @@ export class MultiEmbeddingService {
     }
   }
 
+  /**
+   * 记录指定嵌入提供程序的成功次数
+   * @param providerName 嵌入提供程序名称
+   */
+  /**
+   * 记录指定嵌入提供程序的成功次数
+   * @param providerName 嵌入提供程序名称
+   */
   private recordSuccess(providerName: string) {
     this.failureCounts.set(providerName, 0);
   }
 
+  /**
+   * 获取下一个可用的嵌入提供程序
+   * @returns 下一个可用的嵌入提供程序或null
+   */
   private getNextAvailableProvider(): EmbeddingProvider | null {
     for (let i = 0; i < this.providers.length; i++) {
       const index = (this.currentProviderIndex + i) % this.providers.length;
@@ -146,10 +177,20 @@ export class MultiEmbeddingService {
     return localProvider || null;
   }
 
+  /**
+   * 根据名称获取嵌入提供程序
+   * @param name 嵌入提供程序名称
+   * @returns 嵌入提供程序或null
+   */
   private getProviderByName(name: string): EmbeddingProvider | null {
     return this.providers.find((p) => p.name === name) || null;
   }
 
+  /**
+   * 创建嵌入向量
+   * @param input 输入文本或嵌入输入对象
+   * @returns 嵌入向量数组
+   */
   async createEmbedding(input: string | EmbeddingInput): Promise<number[]> {
     const maxAttempts = this.providers.length;
 
@@ -184,6 +225,11 @@ export class MultiEmbeddingService {
     throw new Error('Failed to create embedding');
   }
 
+  /**
+   * 创建批量嵌入向量
+   * @param inputs 输入文本数组或嵌入输入对象数组
+   * @returns 嵌入向量数组数组
+   */
   async createBatchEmbeddings(
     inputs: string[] | EmbeddingInput[],
   ): Promise<number[][]> {
@@ -211,6 +257,10 @@ export class MultiEmbeddingService {
     }
   }
 
+  /**
+   * 获取所有嵌入提供程序的状态
+   * @returns 所有嵌入提供程序的状态数组
+   */
   getProviderStatus() {
     return this.providers.map((p) => ({
       name: p.name,
@@ -221,6 +271,10 @@ export class MultiEmbeddingService {
     }));
   }
 
+  /**
+   * 获取所有可用的嵌入提供程序名称
+   * @returns 所有可用的嵌入提供程序名称数组
+   */
   getAvailableProviders(): string[] {
     return this.providers.map((p) => p.name);
   }
@@ -237,6 +291,11 @@ class DoubaoEmbeddingProvider implements EmbeddingProvider {
     this.dimensions = config.dimensions || 1024;
   }
 
+  /**
+   * 创建嵌入向量
+   * @param input 输入文本或嵌入输入对象
+   * @returns 嵌入向量数组
+   */
   async createEmbedding(input: string | EmbeddingInput): Promise<number[]> {
     const text = typeof input === 'string' ? input : input.text || '';
 
@@ -284,6 +343,11 @@ class DoubaoEmbeddingProvider implements EmbeddingProvider {
     throw new Error('Invalid response format from Doubao embedding API');
   }
 
+  /**
+   * 创建批量嵌入向量
+   * @param inputs 输入文本数组或嵌入输入对象数组
+   * @returns 嵌入向量数组数组
+   */
   async createBatchEmbeddings(
     inputs: string[] | EmbeddingInput[],
   ): Promise<number[][]> {
@@ -297,10 +361,19 @@ class DoubaoEmbeddingProvider implements EmbeddingProvider {
     return embeddings;
   }
 
+  /**
+   * 检查嵌入提供程序是否可用
+   * @returns 是否可用的布尔值
+   */
   async isAvailable(): Promise<boolean> {
     return !!(this.config.apiKey && this.config.endpoint);
   }
 
+  /**
+   * 归一化输入，将字符串转换为嵌入输入对象数组
+   * @param input 输入文本或嵌入输入对象
+   * @returns 归一化后的嵌入输入对象数组
+   */
   private normalizeInput(input: string | EmbeddingInput): EmbeddingInput[] {
     if (typeof input === 'string') {
       return [{ type: 'text', text: input }];
@@ -318,6 +391,11 @@ class QwenEmbeddingProvider implements EmbeddingProvider {
     this.priority = config.priority;
   }
 
+  /**
+   * 创建嵌入向量
+   * @param input 输入文本或嵌入输入对象
+   * @returns 嵌入向量数组
+   */
   async createEmbedding(input: string | EmbeddingInput): Promise<number[]> {
     const text = typeof input === 'string' ? input : input.text || '';
 
@@ -338,6 +416,11 @@ class QwenEmbeddingProvider implements EmbeddingProvider {
     return response.data.data[0].embedding;
   }
 
+  /**
+   * 创建批量嵌入向量
+   * @param inputs 输入文本数组或嵌入输入对象数组
+   * @returns 嵌入向量数组数组
+   */
   async createBatchEmbeddings(
     inputs: string[] | EmbeddingInput[],
   ): Promise<number[][]> {
@@ -368,6 +451,10 @@ class QwenEmbeddingProvider implements EmbeddingProvider {
     return embeddings;
   }
 
+  /**
+   * 检查嵌入提供程序是否可用
+   * @returns 是否可用的布尔值
+   */
   async isAvailable(): Promise<boolean> {
     return !!(this.config.apiKey && this.config.endpoint);
   }
@@ -384,12 +471,22 @@ class LocalEmbeddingProvider implements EmbeddingProvider {
     this.dimensions = config.dimensions || 1024;
   }
 
-  createEmbedding(input: string | EmbeddingInput): Promise<number[]> {
+  /**
+   * 创建嵌入向量
+   * @param input 输入文本或嵌入输入对象
+   * @returns 嵌入向量数组
+   */
+  async createEmbedding(input: string | EmbeddingInput): Promise<number[]> {
     const text = typeof input === 'string' ? input : input.text || '';
     return Promise.resolve(this.generateLocalEmbedding(text));
   }
 
-  createBatchEmbeddings(
+  /**
+   * 创建批量嵌入向量
+   * @param inputs 输入文本数组或嵌入输入对象数组
+   * @returns 嵌入向量数组数组
+   */
+  async createBatchEmbeddings(
     inputs: string[] | EmbeddingInput[],
   ): Promise<number[][]> {
     const texts = inputs.map((input) =>
@@ -398,10 +495,20 @@ class LocalEmbeddingProvider implements EmbeddingProvider {
     return Promise.resolve(texts.map((t) => this.generateLocalEmbedding(t)));
   }
 
+  /**
+   * 检查嵌入提供程序是否可用
+   * @returns 是否可用的布尔值
+   */
   async isAvailable(): Promise<boolean> {
     return true;
   }
 
+  /**
+   * 生成本地嵌入向量
+   * @param text 输入文本
+   * @param dimension 可选的嵌入维度
+   * @returns 本地嵌入向量数组
+   */
   private generateLocalEmbedding(text: string, dimension?: number): number[] {
     const dim = dimension || this.dimensions;
     const embedding = new Array(dim).fill(0);

@@ -1,8 +1,10 @@
+/**
+ * API密钥服务（用于管理API密钥）
+ */
 import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
@@ -25,6 +27,12 @@ export class ApiKeysService {
     return `sk_${randomBytes(32).toString('hex')}`;
   }
 
+  /**
+   * 创建API密钥
+   * @param userId 用户ID
+   * @param dto 创建API密钥DTO
+   * @returns 创建的API密钥和密钥字符串
+   */
   async create(
     userId: string,
     dto: CreateApiKeyDto,
@@ -69,6 +77,13 @@ export class ApiKeysService {
     return { apiKey: saved, key };
   }
 
+  /**
+   * 刷新API密钥
+   * @param id API密钥ID
+   * @param userId 用户ID
+   * @param dto 刷新API密钥DTO
+   * @returns 刷新后的API密钥和密钥字符串
+   */
   async refresh(
     id: string,
     userId: string,
@@ -90,6 +105,11 @@ export class ApiKeysService {
     return { apiKey: saved, key: newKey };
   }
 
+  /**
+   * 获取用户所有API密钥
+   * @param userId 用户ID
+   * @returns 用户所有API密钥
+   */
   async findAll(userId: string): Promise<ApiKey[]> {
     return this.apiKeyRepository.find({
       where: { userId },
@@ -98,6 +118,12 @@ export class ApiKeysService {
     });
   }
 
+  /**
+   * 获取应用所有API密钥
+   * @param appId 应用ID
+   * @param userId 用户ID
+   * @returns 应用所有API密钥
+   */
   async findByApp(appId: string, userId: string): Promise<ApiKey[]> {
     // 验证应用权限
     const app = await this.appRepository.findOne({
@@ -117,6 +143,12 @@ export class ApiKeysService {
     });
   }
 
+  /**
+   * 获取API密钥
+   * @param id API密钥ID
+   * @param userId 用户ID
+   * @returns API密钥
+   */
   async findOne(id: string, userId: string): Promise<ApiKey> {
     const apiKey = await this.apiKeyRepository.findOne({
       where: { id },
@@ -134,6 +166,11 @@ export class ApiKeysService {
     return apiKey;
   }
 
+  /**
+   * 验证API密钥
+   * @param key API密钥字符串
+   * @returns 验证结果
+   */
   async validateKey(
     key: string,
   ): Promise<{ valid: boolean; user?: User; apiKey?: ApiKey }> {
@@ -163,6 +200,10 @@ export class ApiKeysService {
     return { valid: true, user: apiKey.user, apiKey };
   }
 
+  /**
+   * 记录API密钥使用
+   * @param apiKeyId API密钥ID
+   */
   async recordUsage(apiKeyId: string): Promise<void> {
     await this.apiKeyRepository.update(apiKeyId, {
       lastUsedAt: new Date(),
@@ -170,12 +211,24 @@ export class ApiKeysService {
     });
   }
 
+  /**
+   * 撤销API密钥
+   * @param id API密钥ID
+   * @param userId 用户ID
+   * @returns 撤销后的API密钥
+   */
   async revoke(id: string, userId: string): Promise<ApiKey> {
     const apiKey = await this.findOne(id, userId);
     apiKey.status = ApiKeyStatus.REVOKED;
     return this.apiKeyRepository.save(apiKey);
   }
 
+  /**
+   * 激活API密钥
+   * @param id API密钥ID
+   * @param userId 用户ID
+   * @returns 激活后的API密钥
+   */
   async activate(id: string, userId: string): Promise<ApiKey> {
     const apiKey = await this.findOne(id, userId);
     if (
@@ -189,6 +242,11 @@ export class ApiKeysService {
     return this.apiKeyRepository.save(apiKey);
   }
 
+  /**
+   * 删除API密钥
+   * @param id API密钥ID
+   * @param userId 用户ID
+   */
   async delete(id: string, userId: string): Promise<void> {
     const apiKey = await this.findOne(id, userId);
     await this.apiKeyRepository.softDelete(id);

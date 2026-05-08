@@ -1,3 +1,6 @@
+/**
+ * 权限守卫
+ */
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import {
@@ -10,6 +13,11 @@ import { Role } from '../entities';
 export class PermissionsGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
+  /**
+   * 检查请求是否包含足够的权限
+   * @param context 执行上下文
+   * @returns 是否包含足够的权限
+   */
   canActivate(context: ExecutionContext): boolean {
     const requiredPermissions = this.reflector.getAllAndOverride<Permission[]>(
       PERMISSIONS_KEY,

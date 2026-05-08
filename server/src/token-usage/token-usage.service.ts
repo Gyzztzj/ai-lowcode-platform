@@ -1,3 +1,6 @@
+/**
+ * 令牌使用服务
+ */
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, Between, FindOptionsWhere } from 'typeorm';
@@ -12,6 +15,11 @@ export class TokenUsageService {
     private dataSource: DataSource,
   ) {}
 
+  /**
+   * 记录令牌使用
+   * @param data 令牌使用数据对象
+   * @returns 记录的令牌使用对象
+   */
   async recordUsage(data: {
     userId: string;
     appId?: string | null;
@@ -35,6 +43,13 @@ export class TokenUsageService {
     return this.tokenUsageRepository.save(usage);
   }
 
+  /**
+   * 查找用户令牌使用记录
+   * @param userId 用户ID
+   * @param paginationDto 分页参数
+   * @param filters 过滤参数（可选）
+   * @returns 令牌使用记录列表
+   */
   async findByUser(
     userId: string,
     paginationDto: PaginationDto,
@@ -87,6 +102,12 @@ export class TokenUsageService {
     };
   }
 
+  /**
+   * 获取用户令牌使用统计
+   * @param userId 用户ID
+   * @param filters 过滤参数（可选）
+   * @returns 令牌使用统计对象
+   */
   async getUserStats(
     userId: string,
     filters?: {
@@ -141,6 +162,13 @@ export class TokenUsageService {
     };
   }
 
+  /**
+   * 获取应用令牌使用统计
+   * @param appId 应用ID
+   * @param startDate 开始日期（可选）
+   * @param endDate 结束日期（可选）
+   * @returns 令牌使用统计对象
+   */
   async getAppStats(
     appId: string,
     startDate?: Date,
@@ -174,6 +202,13 @@ export class TokenUsageService {
     };
   }
 
+  /**
+   * 获取用户令牌令牌使用统计
+   * @param userId 用户ID
+   * @param days 时间范围（天数）
+   * @param filters 过滤参数（可选）
+   * @returns 令牌使用统计对象
+   */
   async getDailyStats(
     userId: string,
     days: number = 30,
@@ -219,6 +254,13 @@ export class TokenUsageService {
     }));
   }
 
+  /**
+   * 获取用户令牌令牌使用统计
+   * @param userId 用户ID
+   * @param weeks 时间范围（周数）
+   * @param filters 过滤参数（可选）
+   * @returns 令牌使用统计对象
+   */
   async getWeeklyStats(
     userId: string,
     weeks: number = 12,
@@ -264,6 +306,13 @@ export class TokenUsageService {
     }));
   }
 
+  /**
+   * 获取用户令牌令牌使用统计
+   * @param userId 用户ID
+   * @param months 时间范围（月数）
+   * @param filters 过滤参数（可选）
+   * @returns 令牌使用统计对象
+   */
   async getMonthlyStats(
     userId: string,
     months: number = 12,
@@ -309,6 +358,13 @@ export class TokenUsageService {
     }));
   }
 
+  /**
+   * 获取用户令牌令牌使用统计
+   * @param userId 用户ID
+   * @param startDate 开始日期（可选）
+   * @param endDate 结束日期（可选）
+   * @returns 令牌使用统计对象
+   */
   async getModelsStats(
     userId: string,
     startDate?: Date,
@@ -345,6 +401,14 @@ export class TokenUsageService {
     }));
   }
 
+  /**
+   * 获取用户令牌令牌使用统计
+   * @param userId 用户ID
+   * @param apiKeyId API密钥ID
+   * @param startDate 开始日期（可选）
+   * @param endDate 结束日期（可选）
+   * @returns 令牌使用统计对象
+   */
   async getApiKeyStats(
     userId: string,
     apiKeyId: string,
@@ -363,6 +427,11 @@ export class TokenUsageService {
     });
   }
 
+  /**
+   * 估算文本令牌数
+   * @param text 文本内容
+   * @returns 估算的令牌数
+   */
   estimateTokens(text: string): number {
     return Math.ceil(text.length / 4);
   }

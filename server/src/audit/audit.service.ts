@@ -1,3 +1,6 @@
+/**
+ * 审计服务（用于记录和查询审计日志）
+ */
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In, Like } from 'typeorm';
@@ -18,6 +21,11 @@ export class AuditService {
     return uuidRegex.test(uuid);
   }
 
+  /**
+   * 记录审计日志
+   * @param data 审计日志数据
+   * @returns 记录的审计日志
+   */
   async log(data: {
     userId?: string | null;
     apiKeyId?: string | null;
@@ -70,6 +78,12 @@ export class AuditService {
     }
   }
 
+  /**
+   * 查询用户审计日志
+   * @param userId 用户ID
+   * @param options 查询选项
+   * @returns 审计日志列表和总数量
+   */
   async findByUser(
     userId: string,
     options?: {
@@ -120,6 +134,13 @@ export class AuditService {
     return { logs, total };
   }
 
+  /**
+   * 查询资源审计日志
+   * @param resourceType 资源类型
+   * @param resourceId 资源ID
+   * @param options 查询选项
+   * @returns 审计日志列表和总数量
+   */
   async findByResource(
     resourceType: string,
     resourceId: string,
@@ -138,6 +159,12 @@ export class AuditService {
     return { logs, total };
   }
 
+  /**
+   * 查询操作审计日志
+   * @param action 操作
+   * @param options 查询选项
+   * @returns 审计日志列表和总数量
+   */
   async findByAction(
     action: string,
     options?: {
@@ -163,6 +190,11 @@ export class AuditService {
     return { logs, total };
   }
 
+  /**
+   * 查询所有审计日志
+   * @param options 查询选项
+   * @returns 审计日志列表和总数量
+   */
   async findAll(options?: {
     limit?: number;
     offset?: number;
@@ -220,6 +252,11 @@ export class AuditService {
     return { logs, total };
   }
 
+  /**
+   * 获取审计日志统计信息
+   * @param options 查询选项
+   * @returns 审计日志统计信息
+   */
   async getStats(options?: { startDate?: Date; endDate?: Date }): Promise<{
     totalLogs: number;
     successful: number;
@@ -275,6 +312,11 @@ export class AuditService {
     };
   }
 
+  /**
+   * 导出审计日志
+   * @param options 查询选项
+   * @returns 审计日志列表
+   */
   async exportLogs(options?: {
     startDate?: Date;
     endDate?: Date;

@@ -1,10 +1,8 @@
+/**
+ * 流程服务
+ */
 import { Injectable } from '@nestjs/common';
-import {
-  FlowNode,
-  FlowEdge,
-  ExecutionContext,
-  ExecutionLog,
-} from './flow.types';
+import { FlowNode, FlowEdge, ExecutionContext } from './flow.types';
 import { ExecutorFactory } from '../factory/executor.factory';
 import { AuditService } from '../audit/audit.service';
 
@@ -12,6 +10,16 @@ import { AuditService } from '../audit/audit.service';
 export class FlowService {
   constructor(private auditService: AuditService) {}
 
+  /**
+   * 执行流程
+   * @param nodes 流程节点
+   * @param edges 流程边
+   * @param userInput 用户输入
+   * @param appId 应用ID
+   * @param userId 用户ID
+   * @param options 执行选项
+   * @returns 执行上下文
+   */
   async executeFlow(
     nodes: FlowNode[],
     edges: FlowEdge[],
@@ -59,7 +67,10 @@ export class FlowService {
         }, timeoutMs);
       });
 
-      const executionPath = await Promise.race([executionPromise, timeoutPromise]);
+      const executionPath = await Promise.race([
+        executionPromise,
+        timeoutPromise,
+      ]);
 
       const endTime = Date.now();
       await this.auditService.log({
@@ -92,6 +103,14 @@ export class FlowService {
     }
   }
 
+  /**
+   * 执行流程（支持分支）
+   * @param nodes 流程节点
+   * @param edges 流程边
+   * @param initialContext 初始执行上下文
+   * @param startNodeId 开始节点ID
+   * @returns 执行上下文
+   */
   private async executeFlowWithBranching(
     nodes: FlowNode[],
     edges: FlowEdge[],
@@ -158,6 +177,14 @@ export class FlowService {
     return currentContext;
   }
 
+  /**
+   * 获取下一个节点ID
+   * @param currentNodeId 当前节点ID
+   * @param edges 流程边
+   * @param context 执行上下文
+   * @param nodes 流程节点
+   * @returns 下一个节点ID
+   */
   private getNextNodeId(
     currentNodeId: string,
     edges: FlowEdge[],
@@ -199,14 +226,14 @@ export class FlowService {
         if (conditionNode && conditionNode.data?.branches) {
           const branches = conditionNode.data.branches as Array<any>;
           let branchIndex = -1;
-          
+
           // 如果是默认分支，它的索引应该是branches.length
           if (selectedBranchId === 'default') {
             branchIndex = branches.length;
           } else {
             branchIndex = branches.findIndex((b) => b.id === selectedBranchId);
           }
-          
+
           if (branchIndex !== -1 && outgoingEdges[branchIndex]) {
             return outgoingEdges[branchIndex].target;
           }
@@ -224,6 +251,12 @@ export class FlowService {
     return outgoingEdges[outgoingEdges.length - 1].target;
   }
 
+  /**
+   * 执行节点
+   * @param node 节点
+   * @param context 执行上下文
+   * @returns 更新后的执行上下文
+   */
   private async executeNode(
     node: FlowNode,
     context: ExecutionContext,
@@ -255,6 +288,12 @@ export class FlowService {
     return resultContext;
   }
 
+  /**
+   * 构建拓扑排序
+   * @param nodes 流程节点
+   * @param edges 流程边
+   * @returns 拓扑排序后的节点ID数组
+   */
   private buildTopologicalOrder(
     nodes: FlowNode[],
     edges: FlowEdge[],
@@ -305,6 +344,15 @@ export class FlowService {
     return result;
   }
 
+  /**
+   * 预览流程
+   * @param nodes 流程节点
+   * @param edges 流程边
+   * @param userInput 用户输入
+   * @param appId 应用ID
+   * @param userId 用户ID
+   * @returns 执行上下文
+   */
   async previewFlow(
     nodes: FlowNode[],
     edges: FlowEdge[],
@@ -315,6 +363,12 @@ export class FlowService {
     return this.executeFlow(nodes, edges, userInput, appId, userId);
   }
 
+  /**
+   * 验证流程
+   * @param nodes 流程节点
+   * @param edges 流程边
+   * @returns 验证结果
+   */
   validateFlow(
     nodes: FlowNode[],
     edges: FlowEdge[],

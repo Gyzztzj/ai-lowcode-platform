@@ -1,3 +1,6 @@
+/**
+ * 执行器工厂
+ */
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { NodeExecutor } from '../flow/flow.types';
 import { StartExecutor } from '../executor/start.executor';
