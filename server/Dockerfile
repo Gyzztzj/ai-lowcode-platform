@@ -6,7 +6,7 @@ WORKDIR /app
 RUN npm config set registry https://registry.npmmirror.com
 
 # 2. 安装 pnpm（现在从国内镜像拉取，秒装）
-RUN npm install -g pnpm@latest
+RUN npm install -g pnpm@9
 
 # 3. 配置 pnpm 国内镜像（解决项目依赖下载慢）
 RUN pnpm config set registry https://registry.npmmirror.com
@@ -26,7 +26,7 @@ WORKDIR /app
 
 # 同样配置 npm 镜像，再装 pnpm
 RUN npm config set registry https://registry.npmmirror.com
-RUN npm install -g pnpm@latest
+RUN npm install -g pnpm@9
 
 # 配置 pnpm 镜像
 RUN pnpm config set registry https://registry.npmmirror.com
