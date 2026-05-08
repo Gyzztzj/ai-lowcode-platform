@@ -66,11 +66,11 @@ services:
     build:
       context: ./web
       dockerfile: Dockerfile
-      args:
-        - VITE_API_URL=${VITE_API_URL:-}
     container_name: ai-lowcode-web
     ports:
       - "3001:80"
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:3000}
     depends_on:
       - server
     restart: always

@@ -1,0 +1,29 @@
+{
+  "build": {
+    "nixpacks": {
+      "plan": {
+        "phases": {
+          "setup": {
+            "nixPkgs": ["nodejs_20"],
+            "cmds": ["npm install -g pnpm@9"]
+          },
+          "install": {
+            "cmds": ["pnpm install --frozen-lockfile"],
+            "dependsOn": ["setup"]
+          },
+          "build": {
+            "cmds": ["pnpm build"],
+            "dependsOn": ["install"]
+          }
+        },
+        "start": {
+          "cmd": "pnpm start:prod"
+        }
+      }
+    }
+  },
+  "deploy": {
+    "healthcheckPath": "/api",
+    "startCommand": "pnpm start:prod"
+  }
+}
