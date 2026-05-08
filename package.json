@@ -1,0 +1,17 @@
+{
+  "name": "ai-lowcode-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Low-Code Platform",
+  "scripts": {
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "husky": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
