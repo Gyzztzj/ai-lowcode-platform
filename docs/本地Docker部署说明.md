@@ -1,5 +1,13 @@
 # 本地 Docker 部署说明
 
+## 项目简介
+
+这是一个 AI 低代码平台项目，包含以下核心技术栈：
+- **后端**：NestJS + TypeScript + PostgreSQL (pgvector) + Redis
+- **前端**：React + TypeScript + Vite + Tailwind CSS + ReactFlow
+- **包管理器**：pnpm
+- **容器化**：Docker + Docker Compose
+
 ## 这个文件有什么用？
 
 这个 `docker-compose.yml` 可以灵活启动不同的服务组合，根据你的需求选择。
@@ -15,16 +23,17 @@
 
 ## 第一步：配置环境变量（重要！）
 
-1. 复制 `env.docker.example` 为 `.env.docker`：
+1. 复制 `.env.docker.example` 为 `.env.docker`：
    ```bash
    cp .env.docker.example .env.docker
    ```
    （Windows 用户直接复制重命名）
 
 2. 打开 `.env.docker`，填入你的配置：
-   - 把 `OPENAI_API_KEY` 或 `DOUBAO_API_KEY` 改成你真实的 Key
-   - （可选）把 `JWT_SECRET` 改成强密码
-   - 其他配置可以保持默认
+   - **必须配置**：把 `OPENAI_API_KEY` 或 `DOUBAO_API_KEY` 改成你真实的 Key
+   - **建议修改**：把 `JWT_SECRET` 改成强密码
+   - **前端配置**：Docker 部署时建议设置 `VITE_API_URL=http://localhost:3000`
+   - **其他配置**：数据库配置可以保持默认
 
 ---
 
@@ -39,7 +48,7 @@ docker-compose up -d postgres redis
 ```
 
 然后：
-- 后端本地开发：`cd server && pnpm install && pnpm dev`
+- 后端本地开发：`cd server && pnpm install && pnpm start:dev`
 - 前端本地开发：`cd web && pnpm install && pnpm dev`
 
 | 服务 | 地址 |
@@ -92,11 +101,34 @@ docker-compose up -d postgres redis server
 
 ---
 
+## 服务说明
+
+### PostgreSQL (pgvector)
+- 用于存储应用数据和向量嵌入
+- 自动初始化扩展和 Schema（`server/init-db/` 目录下的 SQL 脚本）
+- 数据通过 Docker Volume 持久化
+
+### Redis
+- 用于缓存和会话管理
+- 数据通过 Docker Volume 持久化
+
+### Server (NestJS)
+- 后端 API 服务
+- 监听端口：3000
+- 依赖 PostgreSQL 和 Redis 健康检查通过后启动
+
+### Web (React + Nginx)
+- 前端静态文件服务
+- 监听端口：3001（容器内 80）
+- 包含 nginx 配置支持 SPA 路由
+
+---
+
 ## 其他说明
 
 ### 数据库数据
 
-数据库数据会持久化保存，即使你 `docker-compose down` 了，数据也不会丢。
+数据库数据会持久化保存，即使你 `docker-compose down` 了，数据也不会丢。数据存储在 Docker Volume `ai-lowcode-postgres-data` 中。
 
 ### 只修改了代码，想重新构建
 
@@ -125,6 +157,7 @@ docker-compose up -d --build
 
 ## 注意事项
 
-- 记得在 `docker-compose.yml` 里填上你的 API Key
+- 记得在 `.env.docker` 文件中填入你的 API Key，不是在 `docker-compose.yml` 中
 - 这个是本地开发环境，不要直接用在生产环境
 - 生产环境建议还是用 Railway 或其他云平台
+- 首次构建镜像可能需要较长时间（取决于网络）
