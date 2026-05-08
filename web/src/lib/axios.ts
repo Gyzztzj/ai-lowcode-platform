@@ -5,11 +5,22 @@ import { useUserStore } from "@/store/userStore";
 
 // 优先使用运行时注入的环境变量，回退到构建时环境变量
 const getApiUrl = () => {
+  let apiUrl: string;
   const runtimeEnv = (window as any).__ENV__?.VITE_API_URL;
-  if (runtimeEnv && runtimeEnv !== 'VITE_API_URL_PLACEHOLDER') {
-    return runtimeEnv;
+  if (runtimeEnv && runtimeEnv !== "VITE_API_URL_PLACEHOLDER") {
+    apiUrl = runtimeEnv;
+  } else {
+    apiUrl = import.meta.env.VITE_API_URL || "/api";
   }
-  return import.meta.env.VITE_API_URL || '/api';
+
+  // 如果配置了完整的 http(s) 地址，确保以 /api 结尾
+  if (apiUrl.startsWith("http")) {
+    if (!apiUrl.endsWith("/api")) {
+      // 如果没有 /api 结尾，添加它
+      return apiUrl.replace(/\/$/, "") + "/api";
+    }
+  }
+  return apiUrl;
 };
 
 const api = axios.create({
@@ -39,10 +50,10 @@ api.interceptors.request.use(
     }
     // 对于 FormData，让浏览器自动设置 Content-Type
     if (config.data instanceof FormData && config.headers) {
-      delete config.headers['Content-Type'];
-    } else if (config.headers && !config.headers['Content-Type']) {
+      delete config.headers["Content-Type"];
+    } else if (config.headers && !config.headers["Content-Type"]) {
       // 对于非 FormData 请求，默认设置为 application/json
-      config.headers['Content-Type'] = 'application/json';
+      config.headers["Content-Type"] = "application/json";
     }
     return config;
   },
@@ -117,15 +128,15 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // 刷新失败，清除token并登出
         console.error("Token刷新失败:", refreshError);
-        
+
         // 清除所有token
         localStorage.removeItem("token");
         localStorage.removeItem("refreshToken");
-        
+
         // 更新store状态
         const userStore = useUserStore.getState();
         userStore.logout();
-        
+
         // 通知等待的请求刷新失败
         onTokenRefreshed("");
 
@@ -134,7 +145,7 @@ api.interceptors.response.use(
           toast.error("登录已过期，请重新登录", {
             description: "请重新登录",
           });
-          
+
           // 使用 replace 避免重复历史记录
           if (window.location.pathname !== "/login") {
             window.location.replace("/login");
@@ -149,10 +160,10 @@ api.interceptors.response.use(
       console.error("认证失败，清除token");
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
-      
+
       const userStore = useUserStore.getState();
       userStore.logout();
-      
+
       if (!window.location.pathname.includes("/login")) {
         window.location.replace("/login");
       }
@@ -162,7 +173,7 @@ api.interceptors.response.use(
     if (error.response) {
       const errorData = error.response.data as { message?: string };
       const errorMsg = errorData.message || "服务器错误";
-      
+
       // 根据 HTTP 状态码给出更明确的错误提示
       let errorTitle = "请求失败";
       if (error.response.status === 400) {
@@ -176,7 +187,7 @@ api.interceptors.response.use(
       } else if (error.response.status >= 500) {
         errorTitle = "服务器错误";
       }
-      
+
       toast.error(errorTitle, {
         description: errorMsg,
       });
