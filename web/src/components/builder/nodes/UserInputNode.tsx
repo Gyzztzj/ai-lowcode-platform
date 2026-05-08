@@ -2,20 +2,16 @@
  * 用户输入节点
  */
 import BaseNode from "./BaseNode";
-import type { NodeProps } from "reactflow";
+import type { NodeProps } from "@xyflow/react";
 
-interface UserInputNodeData {
-  variable?: string;
-  label?: string;
-}
-
-const UserInputNode = ({ data }: NodeProps<UserInputNodeData>) => {
+const UserInputNode = ({ data }: NodeProps) => {
+  const nodeData = data as any;
   return (
     <BaseNode
-      title={data.label || "用户输入"}
+      title={nodeData.label || "用户输入"}
       headerStyle={{ backgroundColor: "#eff6ff" }}
       titleStyle={{ color: "#2563eb" }}
-      description={<p>变量名: {data.variable || "user_input"}</p>}
+      description={<p>变量名: {nodeData.variable || "user_input"}</p>}
     />
   );
 };

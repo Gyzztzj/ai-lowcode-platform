@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ReactFlowProvider } from "reactflow";
+import { ReactFlowProvider } from "@xyflow/react";
 import { useAppStore } from "@/store/appStore";
 import BuilderCanvas from "@/components/builder/BuilderCanvas";
 import NodePanel from "@/components/builder/panels/NodePanel";

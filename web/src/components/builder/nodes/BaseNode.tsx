@@ -3,7 +3,7 @@
  */
 
 import type { ReactNode } from "react";
-import { Handle, Position } from "reactflow";
+import { Handle, Position } from "@xyflow/react";
 
 interface BaseNodeProps {
   title: string;

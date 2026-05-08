@@ -727,7 +727,7 @@ const NodePropertiesDialog = ({
         <DialogHeader>
           <DialogTitle>节点属性</DialogTitle>
           <DialogDescription>
-            编辑 {selectedNode.data.label || selectedNode.type} 的属性
+            编辑 {(selectedNode.data as any).label || selectedNode.type} 的属性
           </DialogDescription>
         </DialogHeader>
         <DialogContentScrollable>
