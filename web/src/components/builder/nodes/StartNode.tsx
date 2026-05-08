@@ -2,16 +2,13 @@
  * 开始节点
  */
 import BaseNode from "./BaseNode";
-import type { NodeProps } from "reactflow";
+import type { NodeProps } from "@xyflow/react";
 
-interface StartNodeData {
-  label?: string;
-}
-
-const StartNode = ({ data }: NodeProps<StartNodeData>) => {
+const StartNode = ({ data }: NodeProps) => {
+  const nodeData = data as any;
   return (
     <BaseNode
-      title={data?.label || "开始"}
+      title={nodeData?.label || "开始"}
       headerStyle={{ backgroundColor: "#f0fdf4" }}
       titleStyle={{ color: "#16a34a" }}
       hasInput={false}

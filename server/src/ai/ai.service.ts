@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -10,7 +6,6 @@ import axios from 'axios';
 import { ChatDto, ChatModel } from './dto/chat.dto';
 import { Readable } from 'stream';
 import { Model } from '../entities/model.entity';
-import { ModelType } from '../entities/model-type.enum';
 
 // 类型定义
 interface Message {
@@ -180,6 +175,18 @@ export class AiService {
     return modelMap[model] || model;
   }
 
+  /**
+   * 调用 AI API
+   * @param endpoint API 端点
+   * @param apiKey API 密钥
+   * @param messages 消息列表
+   * @param model 模型 ID
+   * @param stream 是否流式输出
+   * @param provider 提供商名称
+   * @param temperature 温度参数
+   * @param max_tokens 最大令牌数
+   * @returns AI 响应
+   */
   private async callAiApi(
     endpoint: string,
     apiKey: string,
@@ -316,6 +323,10 @@ export class AiService {
     );
   }
 
+  /**
+   * 获取可用的AI模型
+   * @returns 可用的AI模型列表
+   */
   getAvailableModels() {
     return [
       {
@@ -349,6 +360,11 @@ export class AiService {
     ];
   }
 
+  /**
+   * 流式对话
+   * @param chatDto 对话请求
+   * @returns 流式响应
+   */
   async streamChat(chatDto: ChatDto): Promise<Readable> {
     const {
       messages,
@@ -460,8 +476,7 @@ export class AiService {
             if (content) {
               transformStream.push(`data: ${JSON.stringify({ content })}\n\n`);
             }
-          } catch (e) {
-          }
+          } catch (e) {}
         }
       }
     });

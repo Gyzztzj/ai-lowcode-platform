@@ -1,3 +1,6 @@
+/**
+ * 认证服务
+ */
 import {
   Injectable,
   UnauthorizedException,
@@ -37,6 +40,11 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
+  /**
+   * 注册用户
+   * @param registerDto 注册DTO
+   * @returns 注册结果
+   */
   async register(registerDto: RegisterDto) {
     const existingUser = await this.userRepository.findOne({
       where: { email: registerDto.email },
@@ -72,6 +80,11 @@ export class AuthService {
     };
   }
 
+  /**
+   * 用户登录
+   * @param loginDto 登录DTO
+   * @returns 登录结果
+   */
   async login(loginDto: LoginDto) {
     const user = await this.userRepository.findOne({
       where: { email: loginDto.email },
@@ -104,6 +117,11 @@ export class AuthService {
     };
   }
 
+  /**
+   * 刷新令牌
+   * @param refreshTokenDto 刷新令牌DTO
+   * @returns 刷新令牌结果
+   */
   async refreshToken(refreshTokenDto: RefreshTokenDto) {
     const { refreshToken } = refreshTokenDto;
 
@@ -130,6 +148,11 @@ export class AuthService {
     return tokens;
   }
 
+  /**
+   * 请求密码重置
+   * @param requestPasswordResetDto 请求密码重置DTO
+   * @returns 请求密码重置结果
+   */
   async requestPasswordReset(requestPasswordResetDto: RequestPasswordResetDto) {
     const { email } = requestPasswordResetDto;
 
@@ -164,6 +187,11 @@ export class AuthService {
     };
   }
 
+  /**
+   * 重置密码
+   * @param resetPasswordDto 重置密码DTO
+   * @returns 重置密码结果
+   */
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
     const { token, newPassword } = resetPasswordDto;
 
@@ -198,6 +226,12 @@ export class AuthService {
     return { message: '密码重置成功' };
   }
 
+  /**
+   * 修改密码
+   * @param userId 用户ID
+   * @param changePasswordDto 修改密码DTO
+   * @returns 修改密码结果
+   */
   async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
     const { currentPassword, newPassword } = changePasswordDto;
 
@@ -228,6 +262,12 @@ export class AuthService {
     return { message: '密码修改成功' };
   }
 
+  /**
+   * 用户登出
+   * @param userId 用户ID
+   * @param refreshToken 刷新令牌（可选）
+   * @returns 登出结果
+   */
   async logout(userId: string, refreshToken?: string) {
     if (refreshToken) {
       await this.refreshTokenRepository.update(
@@ -244,6 +284,12 @@ export class AuthService {
     return { message: '登出成功' };
   }
 
+  /**
+   * 生成访问令牌和刷新令牌
+   * @param userId 用户ID
+   * @param email 用户邮箱
+   * @returns 生成的令牌对
+   */
   private async generateTokens(userId: string, email: string) {
     const expiresIn =
       this.configService.get<string>('JWT_ACCESS_TOKEN_EXPIRES_IN') || '1h';
@@ -256,8 +302,28 @@ export class AuthService {
     const expiresAt = new Date();
     const refreshTokenExpiresIn =
       this.configService.get<string>('JWT_REFRESH_TOKEN_EXPIRES_IN') || '7d';
-    const days = parseInt(refreshTokenExpiresIn);
-    expiresAt.setDate(expiresAt.getDate() + days);
+
+    // 解析时间字符串（支持格式：1m, 1h, 7d, 30d）
+    const parseTimeString = (timeStr: string): number => {
+      const match = timeStr.match(/^(\d+)([smhdw])?$/);
+      if (!match) return 7 * 24 * 60 * 60 * 1000; // 默认 7 天
+
+      const value = parseInt(match[1]);
+      const unit = match[2] || 'd';
+
+      const multipliers: Record<string, number> = {
+        s: 1000,
+        m: 60 * 1000,
+        h: 60 * 60 * 1000,
+        d: 24 * 60 * 60 * 1000,
+        w: 7 * 24 * 60 * 60 * 1000,
+      };
+
+      return value * (multipliers[unit] || multipliers.d);
+    };
+
+    const expiresInMs = parseTimeString(refreshTokenExpiresIn);
+    expiresAt.setTime(expiresAt.getTime() + expiresInMs);
 
     const newRefreshToken = this.refreshTokenRepository.create({
       token: refreshToken,

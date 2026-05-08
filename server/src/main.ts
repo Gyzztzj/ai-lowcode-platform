@@ -1,3 +1,6 @@
+/**
+ * 应用入口文件
+ */
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';

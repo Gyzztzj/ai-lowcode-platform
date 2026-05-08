@@ -2,23 +2,18 @@
  * 系统提示词节点
  */
 import BaseNode from "./BaseNode";
-import type { NodeProps } from "reactflow";
+import type { NodeProps } from "@xyflow/react";
 
-interface SystemPromptNodeData {
-  content?: string;
-  prompt?: string;
-  label?: string;
-}
-
-const SystemPromptNode = ({ data }: NodeProps<SystemPromptNodeData>) => {
+const SystemPromptNode = ({ data }: NodeProps) => {
+  const nodeData = data as any;
   return (
     <BaseNode
-      title={data.label || "系统提示词"}
+      title={nodeData.label || "系统提示词"}
       headerStyle={{ backgroundColor: "#faf5ff" }}
       titleStyle={{ color: "#7c3aed" }}
       description={
         <p className="line-clamp-2">
-          {data.content || data.prompt || "未设置提示词"}
+          {nodeData.content || nodeData.prompt || "未设置提示词"}
         </p>
       }
     />

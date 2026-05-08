@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Node as ReactFlowNode } from "reactflow";
+import type { Node as ReactFlowNode } from "@xyflow/react";
 import { Settings, Copy, Trash2 } from "lucide-react";
 import { useBuilderStore } from "@/store/builderStore";
 import { v4 as uuidv4 } from "uuid";

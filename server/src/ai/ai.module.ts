@@ -4,7 +4,6 @@ import { AiService } from './ai.service';
 import { AiController } from './ai.controller';
 import { EmbeddingService } from './embedding.service';
 import { RerankerService } from './reranker.service';
-import { PythonService } from './python.service';
 import { User } from '../entities';
 import { Model } from '../entities/model.entity';
 import { RAGModule } from '../rag/rag.module';
@@ -14,8 +13,8 @@ import { RAGModule } from '../rag/rag.module';
     TypeOrmModule.forFeature([User, Model]),
     forwardRef(() => RAGModule),
   ],
-  providers: [AiService, EmbeddingService, RerankerService, PythonService],
+  providers: [AiService, EmbeddingService, RerankerService],
   controllers: [AiController],
-  exports: [AiService, EmbeddingService, RerankerService, PythonService],
+  exports: [AiService, EmbeddingService, RerankerService],
 })
 export class AiModule {}

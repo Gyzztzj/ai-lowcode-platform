@@ -1,3 +1,6 @@
+/**
+ * 认证控制器
+ */
 import {
   Controller,
   Post,

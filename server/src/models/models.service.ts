@@ -1,9 +1,11 @@
+/**
+ * 模型服务
+ */
 import {
   Injectable,
   NotFoundException,
   Logger,
   InternalServerErrorException,
-  BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -21,6 +23,11 @@ export class ModelsService {
     private modelRepository: Repository<Model>,
   ) {}
 
+  /**
+   * 创建模型
+   * @param createModelDto 创建模型DTO
+   * @returns 创建的模型
+   */
   async create(createModelDto: CreateModelDto) {
     try {
       // 用户创建的模型不能设置为系统模型
@@ -45,6 +52,10 @@ export class ModelsService {
     }
   }
 
+  /**
+   * 查询所有模型
+   * @returns 所有模型列表
+   */
   async findAll() {
     try {
       this.logger.log('查询所有模型');
@@ -65,6 +76,11 @@ export class ModelsService {
     }
   }
 
+  /**
+   * 查询模型详情
+   * @param id 模型ID
+   * @returns 模型详情
+   */
   async findOne(id: string) {
     try {
       this.logger.log(`查询模型 ID: ${id}`);
@@ -89,6 +105,12 @@ export class ModelsService {
     }
   }
 
+  /**
+   * 更新模型
+   * @param id 模型ID
+   * @param updateModelDto 更新模型DTO
+   * @returns 更新后的模型
+   */
   async update(id: string, updateModelDto: UpdateModelDto) {
     try {
       const model = await this.findOne(id);
@@ -121,6 +143,11 @@ export class ModelsService {
     }
   }
 
+  /**
+   * 删除模型
+   * @param id 模型ID
+   * @returns 删除后的模型
+   */
   async remove(id: string) {
     try {
       this.logger.log(`删除模型 ID: ${id}`);

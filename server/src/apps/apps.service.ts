@@ -1,3 +1,6 @@
+/**
+ * 应用服务（用于管理应用）
+ */
 import {
   Injectable,
   NotFoundException,
@@ -24,6 +27,10 @@ export class AppsService {
     private flowService: FlowService,
   ) {}
 
+  /**
+   * 验证应用模型
+   * @param dto 创建或更新应用的DTO
+   */
   private async validateModels(dto: CreateAppDto | UpdateAppDto) {
     if (dto.defaultModel) {
       const model = await this.modelRepository.findOne({
@@ -59,6 +66,12 @@ export class AppsService {
     }
   }
 
+  /**
+   * 创建应用
+   * @param userId 用户ID
+   * @param createAppDto 创建应用的DTO
+   * @returns 创建的应用
+   */
   async create(userId: string, createAppDto: CreateAppDto) {
     await this.validateModels(createAppDto);
     // 将 "none" 转换为 null
@@ -76,6 +89,11 @@ export class AppsService {
     return this.appRepository.save(newApp);
   }
 
+  /**
+   * 获取用户所有应用
+   * @param userId 用户ID
+   * @returns 用户的所有应用
+   */
   async findAll(userId: string) {
     return this.appRepository.find({
       where: [{ userId }, { isPublic: true }],
@@ -85,6 +103,12 @@ export class AppsService {
     });
   }
 
+  /**
+   * 获取应用详情
+   * @param id 应用ID
+   * @param userId 用户ID
+   * @returns 应用详情
+   */
   async findOne(id: string, userId: string) {
     const app = await this.appRepository.findOne({
       where: { id },
@@ -101,6 +125,13 @@ export class AppsService {
     return app;
   }
 
+  /**
+   * 更新应用
+   * @param id 应用ID
+   * @param userId 用户ID
+   * @param updateAppDto 更新应用的DTO
+   * @returns 更新后的应用
+   */
   async update(id: string, userId: string, updateAppDto: UpdateAppDto) {
     const app = await this.findOne(id, userId);
 
@@ -121,6 +152,12 @@ export class AppsService {
     return this.findOne(id, userId);
   }
 
+  /**
+   * 删除应用
+   * @param id 应用ID
+   * @param userId 用户ID
+   * @returns 删除的应用
+   */
   async remove(id: string, userId: string) {
     const app = await this.findOne(id, userId);
 
@@ -132,6 +169,14 @@ export class AppsService {
     return app;
   }
 
+  /**
+   * 保存应用工作流
+   * @param id 应用ID
+   * @param userId 用户ID
+   * @param nodes 工作流节点
+   * @param edges 工作流边
+   * @returns 保存后的应用
+   */
   async saveFlow(
     id: string,
     userId: string,
@@ -151,6 +196,12 @@ export class AppsService {
     return this.findOne(id, userId);
   }
 
+  /**
+   * 发布应用
+   * @param id 应用ID
+   * @param userId 用户ID
+   * @returns 发布后的应用
+   */
   async publish(id: string, userId: string) {
     const app = await this.findOne(id, userId);
 
@@ -167,6 +218,11 @@ export class AppsService {
     return this.findOne(id, userId);
   }
 
+  /**
+   * 根据分享ID获取应用
+   * @param shareId 分享ID
+   * @returns 应用详情
+   */
   async getAppByShareId(shareId: string) {
     const app = await this.appRepository.findOne({
       where: { shareId },
@@ -179,6 +235,11 @@ export class AppsService {
     return app;
   }
 
+  /**
+   * 验证应用工作流
+   * @param validateFlowDto 验证应用流的DTO
+   * @returns 验证结果
+   */
   validateFlow(validateFlowDto: ValidateFlowDto) {
     const { nodes, edges } = validateFlowDto;
     const errors: string[] = [];
@@ -225,6 +286,12 @@ export class AppsService {
     };
   }
 
+  /**
+   * 检查应用工作流是否包含循环
+   * @param nodes 工作流节点
+   * @param edges 工作流边
+   * @returns 是否包含循环
+   */
   private hasCycle(nodes: FlowNode[], edges: FlowEdge[]): boolean {
     const adjacency = new Map<string, string[]>();
     const inDegree = new Map<string, number>();
@@ -269,6 +336,13 @@ export class AppsService {
     return count !== nodes.length;
   }
 
+  /**
+   * 执行应用
+   * @param appId 应用ID
+   * @param userId 用户ID
+   * @param userInput 用户输入
+   * @returns 应用执行结果
+   */
   async executeApp(
     appId: string,
     userId: string,

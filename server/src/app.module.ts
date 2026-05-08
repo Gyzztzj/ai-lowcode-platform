@@ -15,9 +15,7 @@ import { AuditModule } from './audit/audit.module';
 import { FlowModule } from './flow/flow.module';
 import { ContextModule } from './context/context.module';
 import { PublicApiModule } from './public-api/public-api.module';
-import { ResourceManagementModule } from './resource-management/resource-management.module';
 import { SystemConfigModule } from './system-config/system-config.module';
-import { RecycleBinModule } from './recycle-bin/recycle-bin.module';
 import { RAGModule } from './rag/rag.module';
 import { ModelsModule } from './models/models.module';
 
@@ -43,9 +41,7 @@ import { ModelsModule } from './models/models.module';
     FlowModule,
     ContextModule,
     PublicApiModule,
-    ResourceManagementModule,
     SystemConfigModule,
-    RecycleBinModule,
     ModelsModule,
   ],
   controllers: [],

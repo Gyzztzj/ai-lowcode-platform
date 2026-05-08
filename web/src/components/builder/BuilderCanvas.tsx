@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useRef } from "react";
-import ReactFlow, {
+import { ReactFlow,
   Background,
   Controls,
   MiniMap,
@@ -12,9 +12,9 @@ import ReactFlow, {
   type Node,
   type NodeChange,
   type EdgeChange,
-} from "reactflow";
+} from "@xyflow/react";
 import { v4 as uuidv4 } from "uuid";
-import "reactflow/dist/style.css";
+import "@xyflow/react/dist/style.css";
 import { useBuilderStore } from "@/store/builderStore";
 import { nodeTypes } from "./nodes";
 import { useKeyPress } from "@/hooks/useKeyPress";
@@ -298,7 +298,7 @@ const BuilderCanvas = () => {
         nodesDraggable
         nodesConnectable
         elementsSelectable
-        edgesUpdatable
+        edgesReconnectable
         defaultEdgeOptions={{
           animated: true,
           style: { stroke: "#6366f1" },

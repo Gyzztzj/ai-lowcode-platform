@@ -1,3 +1,6 @@
+/**
+ * 知识库服务
+ */
 import {
   Injectable,
   NotFoundException,
@@ -47,6 +50,8 @@ export class KnowledgeService {
 
   /**
    * 处理文件名编码，确保中文字符正确显示
+   * @param filename 原始文件名
+   * @returns 解码后的文件名
    */
   private decodeFilename(filename: string): string {
     if (!filename) return filename;
@@ -73,7 +78,12 @@ export class KnowledgeService {
     }
   }
 
-  // 创建知识库
+  /**
+   * 创建知识库
+   * @param userId 用户ID
+   * @param dto 创建知识库DTO
+   * @returns 创建的知识库
+   */
   async create(userId: string, dto: CreateKnowledgeBaseDto) {
     const newKnowledgeBase = this.knowledgeBaseRepository.create({
       ...dto,
@@ -83,7 +93,11 @@ export class KnowledgeService {
     return this.knowledgeBaseRepository.save(newKnowledgeBase);
   }
 
-  // 获取用户的所有知识库
+  /**
+   * 获取用户的所有知识库
+   * @param userId 用户ID
+   * @returns 用户的所有知识库
+   */
   async findAll(userId: string) {
     const knowledgeBases = await this.knowledgeBaseRepository.find({
       where: { userId },
@@ -102,7 +116,12 @@ export class KnowledgeService {
     }));
   }
 
-  // 获取单个知识库详情
+  /**
+   * 获取单个知识库详情
+   * @param id 知识库ID
+   * @param userId 用户ID（可选）
+   * @returns 知识库详情
+   */
   async findOne(id: string, userId?: string) {
     const kb = await this.knowledgeBaseRepository.findOne({
       where: { id },
@@ -130,7 +149,12 @@ export class KnowledgeService {
     return kb;
   }
 
-  // 删除知识库
+  /**
+   * 删除知识库
+   * @param id 知识库ID
+   * @param userId 用户ID
+   * @returns 删除的知识库
+   */
   async remove(id: string, userId: string) {
     const kb = await this.findOne(id, userId);
 
@@ -138,7 +162,13 @@ export class KnowledgeService {
     return kb;
   }
 
-  // 上传文档
+  /**
+   * 上传文档到知识库
+   * @param knowledgeBaseId 知识库ID
+   * @param userId 用户ID
+   * @param file 上传的文件
+   * @returns 上传的文档
+   */
   async uploadDocument(
     knowledgeBaseId: string,
     userId: string,
@@ -180,7 +210,13 @@ export class KnowledgeService {
     return document;
   }
 
-  // 批量上传文档
+  /**
+   * 批量上传文档
+   * @param knowledgeBaseId 知识库ID
+   * @param userId 用户ID
+   * @param files 要上传的文件数组
+   * @returns 上传的文档数组
+   */
   async batchUploadDocuments(
     knowledgeBaseId: string,
     userId: string,
@@ -230,7 +266,13 @@ export class KnowledgeService {
     return documents;
   }
 
-  // 通过 URL 爬取并添加文档
+  /**
+   * 通过 URL 爬取并添加文档到知识库
+   * @param knowledgeBaseId 知识库ID
+   * @param userId 用户ID
+   * @param url 要爬取的 URL
+   * @returns 添加的文档
+   */
   async addDocumentFromUrl(
     knowledgeBaseId: string,
     userId: string,
@@ -264,7 +306,12 @@ export class KnowledgeService {
     return document;
   }
 
-  // 重新处理文档
+  /**
+   * 重新处理文档到知识库
+   * @param documentId 文档ID
+   * @param userId 用户ID
+   * @returns 重新处理后的文档
+   */
   async reprocessDocument(documentId: string, userId: string) {
     const document = await this.documentRepository.findOne({
       where: { id: documentId },
@@ -307,41 +354,12 @@ export class KnowledgeService {
     return this.documentRepository.findOne({ where: { id: documentId } });
   }
 
-  // 简单的文本分块函数
-  private splitTextIntoChunks(
-    text: string,
-    chunkSize: number = 500,
-    overlap: number = 100,
-  ): string[] {
-    const chunks: string[] = [];
-    let start = 0;
-
-    while (start < text.length) {
-      const end = Math.min(start + chunkSize, text.length);
-      let chunk = text.slice(start, end);
-
-      const lastPunctuation = Math.max(
-        chunk.lastIndexOf('。'),
-        chunk.lastIndexOf('！'),
-        chunk.lastIndexOf('？'),
-        chunk.lastIndexOf('\n\n'),
-      );
-
-      if (lastPunctuation > chunkSize / 2) {
-        chunk = chunk.slice(0, lastPunctuation + 1);
-      }
-
-      if (chunk.trim()) {
-        chunks.push(chunk.trim());
-      }
-
-      start += chunkSize - overlap;
-    }
-
-    return chunks;
-  }
-
-  // 异步处理文档
+  /**
+   * 异步处理文档到知识库
+   * @param documentId 文档ID
+   * @param filePath 文档文件路径
+   * @param fileType 文档文件类型
+   */
   private async processDocumentAsync(
     documentId: string,
     filePath: string,
@@ -399,7 +417,12 @@ export class KnowledgeService {
     }
   }
 
-  // 异步处理纯文本内容
+  /**
+   * 异步处理纯文本内容到知识库
+   * @param documentId 文档ID
+   * @param text 要处理的纯文本内容
+   * @param sourceUrl 文档来源URL
+   */
   private async processTextAsync(
     documentId: string,
     text: string,
@@ -417,7 +440,12 @@ export class KnowledgeService {
     }
   }
 
-  // 公共的文本处理逻辑
+  /**
+   * 公共的文本处理逻辑到知识库
+   * @param documentId 文档ID
+   * @param text 要处理的纯文本内容
+   * @param source 文档来源URL
+   */
   private async processTextContentAsync(
     documentId: string,
     text: string,
@@ -461,7 +489,12 @@ export class KnowledgeService {
     });
   }
 
-  // 删除文档
+  /**
+   * 删除文档到知识库
+   * @param documentId 文档ID
+   * @param userId 用户ID
+   * @returns 删除的文档
+   */
   async deleteDocument(documentId: string, userId: string) {
     const document = await this.documentRepository.findOne({
       where: { id: documentId },
@@ -490,6 +523,12 @@ export class KnowledgeService {
 
   /**
    * 语义检索
+   * @param knowledgeBaseId 知识库ID
+   * @param query 搜索查询
+   * @param topK 返回的文档数量
+   * @param similarityThreshold 相似阈值
+   * @param userId 用户ID
+   * @returns 搜索结果
    */
   async retrieve(
     knowledgeBaseId: string,
@@ -513,7 +552,14 @@ export class KnowledgeService {
   }
 
   /**
-   * 检索并重排序
+   * 检索并重排序到知识库
+   * @param knowledgeBaseId 知识库ID
+   * @param query 搜索查询
+   * @param topK 返回的文档数量
+   * @param topN 重排序后的文档数量
+   * @param similarityThreshold 相似阈值
+   * @param userId 用户ID
+   * @returns 搜索结果
    */
   async retrieveWithRerank(
     knowledgeBaseId: string,
@@ -537,11 +583,9 @@ export class KnowledgeService {
     }
 
     const documents = candidates.map((c) => c.content);
-    const rerankResults = await this.rerankerService.rerank(
-      query,
-      documents,
+    const rerankResults = await this.rerankerService.rerank(query, documents, {
       topN,
-    );
+    });
 
     const finalResults = rerankResults.map((result) => ({
       ...candidates[result.index],

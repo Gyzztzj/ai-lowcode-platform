@@ -2,16 +2,13 @@
  * 结束节点
  */
 import BaseNode from "./BaseNode";
-import type { NodeProps } from "reactflow";
+import type { NodeProps } from "@xyflow/react";
 
-interface EndNodeData {
-  label?: string;
-}
-
-const EndNode = ({ data }: NodeProps<EndNodeData>) => {
+const EndNode = ({ data }: NodeProps) => {
+  const nodeData = data as any;
   return (
     <BaseNode
-      title={data?.label || "结束"}
+      title={nodeData?.label || "结束"}
       headerStyle={{ backgroundColor: "#fef2f2" }}
       titleStyle={{ color: "#dc2626" }}
       hasOutput={false}

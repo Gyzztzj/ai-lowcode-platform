@@ -1,3 +1,6 @@
+/**
+ * 分块仓库
+ */
 import { Repository, DataSource } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Chunk } from '../entities';

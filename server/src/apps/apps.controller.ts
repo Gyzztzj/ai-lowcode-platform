@@ -1,3 +1,6 @@
+/**
+ * 应用控制器（用于管理应用）
+ */
 import {
   Controller,
   Get,
@@ -245,11 +248,11 @@ export class AppsController {
         await new Promise((resolve) => setTimeout(resolve, 10));
       }
     } catch (error) {
-        fullContent = '抱歉，执行出错了，请稍后重试。';
-        transformStream.push(
-          `data: ${JSON.stringify({ content: fullContent })}\n\n`,
-        );
-      }
+      fullContent = '抱歉，执行出错了，请稍后重试。';
+      transformStream.push(
+        `data: ${JSON.stringify({ content: fullContent })}\n\n`,
+      );
+    }
 
     transformStream.push(`data: [DONE]\n\n`);
     transformStream.push(null);

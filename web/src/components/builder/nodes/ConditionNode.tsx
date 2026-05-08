@@ -1,4 +1,4 @@
-import { Handle, Position } from "reactflow";
+import { Handle, Position } from "@xyflow/react";
 
 const ConditionNode = ({ data, selected }: any) => {
   const branches = data.branches || [];
