@@ -1,6 +1,6 @@
 [phases.setup]
-  nixPkgs = ["nodejs", "pnpm"]
-  cmds = ["pnpm config set store-dir /app/.pnpm-store"]
+  nixPkgs = ["nodejs_20"]
+  cmds = ["npm install -g pnpm@9"]
 
 [phases.install]
   cmds = ["pnpm install --frozen-lockfile"]
