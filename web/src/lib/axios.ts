@@ -3,8 +3,17 @@ import { toast } from "sonner";
 import { authApi } from "./api-client";
 import { useUserStore } from "@/store/userStore";
 
+// 优先使用运行时注入的环境变量，回退到构建时环境变量
+const getApiUrl = () => {
+  const runtimeEnv = (window as any).__ENV__?.VITE_API_URL;
+  if (runtimeEnv && runtimeEnv !== 'VITE_API_URL_PLACEHOLDER') {
+    return runtimeEnv;
+  }
+  return import.meta.env.VITE_API_URL || '/api';
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: getApiUrl(),
   timeout: 120000, // 增加到 120 秒，因为大模型请求可能需要更长时间
 });
 

@@ -16,12 +16,7 @@ RUN pnpm install --frozen-lockfile
 # 复制源码
 COPY . .
 
-# 接收构建参数并设置为环境变量
-# 注意：Vite 环境变量必须以 VITE_ 开头，且构建时就确定
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
-
-# 构建
+# 构建（不需要构建参数，我们用运行时注入）
 RUN pnpm build
 
 # 生产阶段 - 使用 nginx 提供静态文件服务
@@ -33,6 +28,11 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # 复制 nginx 配置（处理前端路由）
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# 复制环境变量注入脚本
+COPY env.sh /usr/share/nginx/html/env.sh
+RUN chmod +x /usr/share/nginx/html/env.sh
+
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+# 使用脚本启动，先注入环境变量再启动 nginx
+CMD ["/usr/share/nginx/html/env.sh"]
