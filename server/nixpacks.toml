@@ -1,0 +1,14 @@
+[phases.setup]
+  nixPkgs = ["nodejs", "pnpm"]
+  cmds = ["pnpm config set store-dir /app/.pnpm-store"]
+
+[phases.install]
+  cmds = ["pnpm install --frozen-lockfile"]
+  dependsOn = ["setup"]
+
+[phases.build]
+  cmds = ["pnpm build"]
+  dependsOn = ["install"]
+
+[start]
+  cmd = "pnpm start:prod"

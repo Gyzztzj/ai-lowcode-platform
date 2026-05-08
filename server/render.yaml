@@ -3,8 +3,8 @@ services:
     name: ai-lowcode-api
     env: node
     plan: free
-    buildCommand: cd server && npm install && npm run build
-    startCommand: cd server && npm run start:prod
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start:prod
     envVars:
       - key: NODE_ENV
         value: production
