@@ -24,6 +24,19 @@ import {
 } from "@/components/ui/select";
 import { Plus, Trash2, Variable } from "lucide-react";
 
+interface Branch {
+  id?: string;
+  label?: string;
+  condition?: string;
+  targetNodeId?: string;
+}
+
+interface VariableDef {
+  name?: string;
+  value?: string;
+  type?: string;
+}
+
 interface NodePropertiesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -118,11 +131,11 @@ const NodePropertiesDialog = ({
   if (!selectedNode) return null;
 
   const handleUpdate = (data: Record<string, unknown>) => {
-    let processedData = { ...data };
+    const processedData = { ...data };
 
     // 处理条件分支：确保每个分支都有稳定的id
     if (selectedNode.type === "condition" && processedData.branches) {
-      const branches = processedData.branches as Array<any>;
+      const branches = processedData.branches as Array<Branch>;
       processedData.branches = branches.map((branch, index) => ({
         ...branch,
         id: branch.id || `branch-${index}`,
@@ -466,12 +479,7 @@ const NodePropertiesDialog = ({
               <Label className="text-sm font-medium">分支配置</Label>
               <div className="mt-2 space-y-3">
                 {(
-                  (selectedNode.data.branches as Array<{
-                    id: string;
-                    label: string;
-                    condition: string;
-                    targetNodeId: string;
-                  }>) || []
+                  (selectedNode.data.branches as Array<Branch>) || []
                 ).map((branch, index) => (
                   <div
                     key={branch.id || index}
@@ -487,7 +495,7 @@ const NodePropertiesDialog = ({
                         className="h-8 w-8 text-red-500"
                         onClick={() => {
                           const branches =
-                            (selectedNode.data.branches as Array<any>) || [];
+                            (selectedNode.data.branches as Array<Branch>) || [];
                           const newBranches = branches.filter(
                             (_, i) => i !== index,
                           );
@@ -504,7 +512,7 @@ const NodePropertiesDialog = ({
                         value={branch.label || ""}
                         onChange={(e) => {
                           const branches =
-                            (selectedNode.data.branches as Array<any>) || [];
+                            (selectedNode.data.branches as Array<Branch>) || [];
                           const newBranches = [...branches];
                           newBranches[index] = {
                             ...newBranches[index],
@@ -522,7 +530,7 @@ const NodePropertiesDialog = ({
                         value={branch.condition || ""}
                         onChange={(e) => {
                           const branches =
-                            (selectedNode.data.branches as Array<any>) || [];
+                            (selectedNode.data.branches as Array<Branch>) || [];
                           const newBranches = [...branches];
                           newBranches[index] = {
                             ...newBranches[index],
@@ -540,7 +548,7 @@ const NodePropertiesDialog = ({
                         value={branch.targetNodeId || ""}
                         onChange={(e) => {
                           const branches =
-                            (selectedNode.data.branches as Array<any>) || [];
+                            (selectedNode.data.branches as Array<Branch>) || [];
                           const newBranches = [...branches];
                           newBranches[index] = {
                             ...newBranches[index],
@@ -559,12 +567,12 @@ const NodePropertiesDialog = ({
                   className="w-full"
                   onClick={() => {
                     const branches =
-                      (selectedNode.data.branches as Array<any>) || [];
+                      (selectedNode.data.branches as Array<Branch>) || [];
                     // 先确保已有的分支都有id
                     const normalizedBranches = branches.map(
-                      (branch, index) => ({
+                      (branch, idx) => ({
                         ...branch,
-                        id: branch.id || `branch-${index}`,
+                        id: branch.id || `branch-${idx}`,
                       }),
                     );
                     // 新增的分支用下一个索引
@@ -607,11 +615,7 @@ const NodePropertiesDialog = ({
               <Label className="text-sm font-medium">变量配置</Label>
               <div className="mt-2 space-y-3">
                 {(
-                  (selectedNode.data.variables as Array<{
-                    name: string;
-                    value: string;
-                    type: string;
-                  }>) || []
+                  (selectedNode.data.variables as Array<VariableDef>) || []
                 ).map((variable, index) => (
                   <div key={index} className="border rounded-lg p-3 space-y-2">
                     <div className="flex items-center justify-between">
@@ -624,7 +628,8 @@ const NodePropertiesDialog = ({
                         className="h-8 w-8 text-red-500"
                         onClick={() => {
                           const variables =
-                            (selectedNode.data.variables as Array<any>) || [];
+                            (selectedNode.data.variables as Array<VariableDef>) ||
+                            [];
                           const newVariables = variables.filter(
                             (_, i) => i !== index,
                           );
@@ -641,7 +646,8 @@ const NodePropertiesDialog = ({
                         value={variable.name || ""}
                         onChange={(e) => {
                           const variables =
-                            (selectedNode.data.variables as Array<any>) || [];
+                            (selectedNode.data.variables as Array<VariableDef>) ||
+                            [];
                           const newVariables = [...variables];
                           newVariables[index] = {
                             ...newVariables[index],
@@ -658,7 +664,8 @@ const NodePropertiesDialog = ({
                         value={variable.type || "string"}
                         onValueChange={(value) => {
                           const variables =
-                            (selectedNode.data.variables as Array<any>) || [];
+                            (selectedNode.data.variables as Array<VariableDef>) ||
+                            [];
                           const newVariables = [...variables];
                           newVariables[index] = {
                             ...newVariables[index],
@@ -685,7 +692,8 @@ const NodePropertiesDialog = ({
                         value={variable.value || ""}
                         onChange={(e) => {
                           const variables =
-                            (selectedNode.data.variables as Array<any>) || [];
+                            (selectedNode.data.variables as Array<VariableDef>) ||
+                            [];
                           const newVariables = [...variables];
                           newVariables[index] = {
                             ...newVariables[index],
@@ -704,7 +712,7 @@ const NodePropertiesDialog = ({
                   className="w-full"
                   onClick={() => {
                     const variables =
-                      (selectedNode.data.variables as Array<any>) || [];
+                      (selectedNode.data.variables as Array<VariableDef>) || [];
                     const newVariable = { name: "", value: "", type: "string" };
                     handleUpdate({ variables: [...variables, newVariable] });
                   }}
@@ -721,13 +729,15 @@ const NodePropertiesDialog = ({
     }
   };
 
+  const nodeLabel = (selectedNode.data.label as string) || selectedNode.type;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle>节点属性</DialogTitle>
           <DialogDescription>
-            编辑 {(selectedNode.data as any).label || selectedNode.type} 的属性
+            编辑 {nodeLabel} 的属性
           </DialogDescription>
         </DialogHeader>
         <DialogContentScrollable>

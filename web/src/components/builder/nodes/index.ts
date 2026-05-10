@@ -19,4 +19,4 @@ export const nodeTypes = {
   knowledgeBase: KnowledgeBaseNode,
   condition: ConditionNode,
   variableSet: VariableSetNode,
-};
+} as const;

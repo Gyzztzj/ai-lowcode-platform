@@ -4,9 +4,7 @@ import {
   IsNumber,
   Min,
   Max,
-  IsArray,
   IsBoolean,
-  IsUUID,
 } from 'class-validator';
 
 export class QueryKnowledgeBaseDto {

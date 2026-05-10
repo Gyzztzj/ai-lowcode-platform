@@ -107,7 +107,7 @@ const PreviewDialog = ({ open, onOpenChange }: PreviewDialogProps) => {
 
           setMessages((prev) =>
             prev.map((msg) =>
-              (msg as any).id === tempMessageId
+              msg.id === tempMessageId
                 ? { ...msg, content: currentContent }
                 : msg,
             ),
@@ -117,17 +117,21 @@ const PreviewDialog = ({ open, onOpenChange }: PreviewDialogProps) => {
         // 如果没有内容，直接更新
         setMessages((prev) =>
           prev.map((msg) =>
-            (msg as any).id === tempMessageId
-              ? { ...msg, content: rawContent }
-              : msg,
+            msg.id === tempMessageId ? { ...msg, content: rawContent } : msg,
           ),
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("预览失败:", error);
+      const errMsg =
+        error && typeof error === "object" && "response" in error
+          ? (error as { response?: { data?: { message?: string } } }).response
+              ?.data?.message
+          : error && typeof error === "object" && "message" in error
+            ? (error as { message?: string }).message
+            : "请稍后重试";
       toast.error("预览失败", {
-        description:
-          error?.response?.data?.message || error?.message || "请稍后重试",
+        description: errMsg,
       });
       // 移除刚才添加的用户消息
       setMessages((prev) => prev.slice(0, -1));
@@ -139,6 +143,7 @@ const PreviewDialog = ({ open, onOpenChange }: PreviewDialogProps) => {
   // 对话框关闭时清空消息
   useEffect(() => {
     if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMessages([]);
     }
   }, [open]);

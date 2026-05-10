@@ -1,4 +1,8 @@
-import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import axios, {
+  type AxiosError,
+  type InternalAxiosRequestConfig,
+  type AxiosResponse,
+} from "axios";
 import { toast } from "sonner";
 import { authApi } from "./api-client";
 import { useUserStore } from "@/store/userStore";
@@ -6,7 +10,12 @@ import { useUserStore } from "@/store/userStore";
 // 优先使用运行时注入的环境变量，回退到构建时环境变量
 const getApiUrl = () => {
   let apiUrl: string;
-  const runtimeEnv = (window as any).__ENV__?.VITE_API_URL;
+  // 使用类型守卫处理 window 对象
+  const runtimeEnv =
+    window && typeof window === "object" && "__ENV__" in window
+      ? (window as { __ENV__?: { VITE_API_URL?: string } }).__ENV__
+          ?.VITE_API_URL
+      : undefined;
   if (runtimeEnv && runtimeEnv !== "VITE_API_URL_PLACEHOLDER") {
     apiUrl = runtimeEnv;
   } else {
@@ -64,14 +73,14 @@ api.interceptors.request.use(
 
 // 响应拦截器：统一处理错误和token刷新
 api.interceptors.response.use(
-  (response) => {
+  (response: AxiosResponse) => {
     const result = response.data as {
       code: number;
       message?: string;
       data?: unknown;
     };
     if (result.code === 0) {
-      return result.data as any;
+      return result.data as AxiosResponse["data"];
     }
     throw new Error(result.message || "请求失败");
   },

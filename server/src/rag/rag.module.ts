@@ -23,10 +23,6 @@ import { RAGController } from './interfaces/controllers/rag.controller';
     MultiEmbeddingService,
     ChunkRepository,
   ],
-  exports: [
-    RAGOrchestratorService,
-    MultiEmbeddingService,
-    TextSplitterService,
-  ],
+  exports: [RAGOrchestratorService, MultiEmbeddingService, TextSplitterService],
 })
 export class RAGModule {}

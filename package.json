@@ -4,14 +4,16 @@
   "private": true,
   "description": "AI Low-Code Platform",
   "scripts": {
-    "prepare": "husky install"
-  },
-  "devDependencies": {
-    "@commitlint/cli": "^19.0.0",
-    "@commitlint/config-conventional": "^19.0.0",
-    "husky": "^9.0.0"
+    "prepare": "husky",
+    "commitlint": "commitlint",
+    "commitlint:ci": "commitlint --from=HEAD~1 --to=HEAD"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "19.8.1",
+    "@commitlint/config-conventional": "19.8.1",
+    "husky": "^9.1.7"
   }
 }

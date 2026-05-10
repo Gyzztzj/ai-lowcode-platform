@@ -1,11 +1,13 @@
-import { Handle, Position } from "@xyflow/react";
+import { Handle, Position, type NodeProps } from "@xyflow/react";
+import type { Branch } from "./types";
 
-const ConditionNode = ({ data, selected }: any) => {
-  const branches = data.branches || [];
+const ConditionNode = ({ data, selected }: NodeProps) => {
+  const typedData = data as { label?: string; branches?: Branch[] };
+  const branches = typedData.branches || [];
 
   // 确保每个分支都有稳定的id，同时创建所有分支数组
   const allBranches = [
-    ...branches.map((branch: any, index: number) => {
+    ...branches.map((branch: Branch, index: number) => {
       // 如果分支没有id，生成一个临时但稳定的id（基于索引）
       const safeId = branch.id || `branch-${index}`;
       return {
@@ -45,7 +47,7 @@ const ConditionNode = ({ data, selected }: any) => {
         style={{ backgroundColor: "#fefce8" }}
       >
         <h3 className="font-medium" style={{ color: "#ca8a04" }}>
-          {data.label || "条件分支"}
+          {typedData.label || "条件分支"}
         </h3>
       </div>
 

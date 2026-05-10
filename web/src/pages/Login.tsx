@@ -36,7 +36,7 @@ const Login = () => {
   const { login, isLoginPending } = useAuth();
 
   // 获取原始跳转路径，默认为 /chat
-  const from = (location.state as any)?.from || "/chat";
+  const from = (location.state as { from?: string })?.from || "/chat";
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -54,10 +54,13 @@ const Login = () => {
         description: "欢迎回来",
       });
       navigate(from, { replace: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Login: 登录失败:", error);
       const errMsg =
-        error?.response?.data?.message || "登录失败，请检查您的邮箱和密码";
+        (error && typeof error === "object" && "response" in error && 
+          typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === "string")
+          ? (error as { response: { data: { message: string } } }).response.data.message
+          : "登录失败，请检查您的邮箱和密码";
       setErrorMessage(errMsg);
       toast.error("登录失败", {
         description: errMsg,

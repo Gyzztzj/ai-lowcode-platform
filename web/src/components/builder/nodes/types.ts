@@ -15,3 +15,15 @@ export const NodeType = {
 export interface NodeData {
   [key: string]: unknown;
 }
+
+export interface Branch {
+  id?: string;
+  label?: string;
+  condition?: string;
+  targetNodeId?: string;
+}
+
+export interface Variable {
+  name?: string;
+  value?: string;
+}

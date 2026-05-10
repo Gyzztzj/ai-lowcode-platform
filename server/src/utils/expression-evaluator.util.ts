@@ -23,7 +23,7 @@ export class ExpressionEvaluator {
       const tokens = this.tokenize(expression);
       const ast = this.parse(tokens);
       return this.evaluateAST(ast, context);
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }

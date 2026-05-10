@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,17 +57,17 @@ const ModelFormDialog = ({
     enabled: true,
   });
 
-  useEffect(() => {
-    if (model) {
+  const updateFormData = useCallback((modelData: Model | null) => {
+    if (modelData) {
       setFormData({
-        name: model.name,
-        modelId: model.modelId || "",
-        provider: model.provider,
-        type: model.type,
+        name: modelData.name,
+        modelId: modelData.modelId || "",
+        provider: modelData.provider,
+        type: modelData.type,
         apiKey: "",
-        apiEndpoint: model.apiEndpoint,
-        description: model.description || "",
-        enabled: model.enabled,
+        apiEndpoint: modelData.apiEndpoint,
+        description: modelData.description || "",
+        enabled: modelData.enabled,
       });
     } else {
       setFormData({
@@ -81,19 +81,24 @@ const ModelFormDialog = ({
         enabled: true,
       });
     }
-  }, [model]);
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    updateFormData(model);
+  }, [model, updateFormData]);
 
   const isSystemModel = model?.isSystem;
 
   // 清理输入值，移除多余的引号、反引号等
-  const cleanInput = (value: string): string => {
+  const cleanInput = useCallback((value: string): string => {
     return value
       .trim()
       .replace(/^['"`]+|['"`]+$/g, "")
       .trim();
-  };
+  }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     const cleanName = cleanInput(formData.name);
     const cleanModelId = cleanInput(formData.modelId);
     const cleanProvider = cleanInput(formData.provider);
@@ -154,7 +159,7 @@ const ModelFormDialog = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [model, formData, onOpenChange, onSuccess, cleanInput]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

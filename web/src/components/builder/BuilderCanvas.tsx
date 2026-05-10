@@ -12,6 +12,7 @@ import { ReactFlow,
   type Node,
   type NodeChange,
   type EdgeChange,
+  type NodeTypes,
 } from "@xyflow/react";
 import { v4 as uuidv4 } from "uuid";
 import "@xyflow/react/dist/style.css";
@@ -22,6 +23,7 @@ import { useAppStore } from "@/store/appStore";
 import NodeContextMenu from "./NodeContextMenu";
 import NodePropertiesDialog from "./NodePropertiesDialog";
 import { EdgeContextMenu } from "./EdgeContextMenu";
+import type { App as AppType } from "@/types";
 
 const BuilderCanvas = () => {
   const currentApp = useAppStore((state) => state.currentApp);
@@ -77,7 +79,7 @@ const BuilderCanvas = () => {
   );
 
   const onReconnectEnd = useCallback(
-    (_: any, edge: Edge) => {
+    (_: unknown, edge: Edge) => {
       if (!edgeReconnectSuccessful.current) {
         deleteEdge(edge.id);
       }
@@ -161,14 +163,15 @@ const BuilderCanvas = () => {
 
   // 加载应用流程数据
   useEffect(() => {
-    const isArray = (value: any) => Array.isArray(value);
+    const isArray = (value: unknown): value is Array<unknown> => Array.isArray(value);
 
     if (currentApp) {
-      const validNodes = isArray(currentApp.nodes)
-        ? (currentApp.nodes as Node[])
+      const app = currentApp as AppType & { nodes?: unknown; edges?: unknown };
+      const validNodes = isArray(app.nodes)
+        ? (app.nodes as Node[])
         : null;
-      const validEdges = isArray(currentApp.edges)
-        ? (currentApp.edges as Edge[])
+      const validEdges = isArray(app.edges)
+        ? (app.edges as Edge[])
         : null;
 
       if (validNodes && validEdges) {
@@ -289,7 +292,7 @@ const BuilderCanvas = () => {
         onEdgeClick={onEdgeClick}
         onEdgeContextMenu={onEdgeContextMenu}
         onPaneClick={onPaneClick}
-        nodeTypes={nodeTypes}
+        nodeTypes={nodeTypes as NodeTypes}
         fitView
         snapToGrid
         snapGrid={[20, 20]}

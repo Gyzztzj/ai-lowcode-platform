@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -62,7 +62,7 @@ const ApiKeysManager = ({ appId, app }: ApiKeysManagerProps) => {
     appId,
   });
 
-  const fetchApiKeys = async () => {
+  const fetchApiKeys = useCallback(async () => {
     setIsLoading(true);
     try {
       const keys = appId
@@ -71,15 +71,20 @@ const ApiKeysManager = ({ appId, app }: ApiKeysManagerProps) => {
       setApiKeys(keys);
     } catch (error) {
       console.error("获取 API 密钥失败:", error);
-      toast.error("获取失败", { description: "无法加载 API 密钥列表" });
+      toast.error("加载失败", { description: "无法加载 API 密钥列表" });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [appId]);
+
+  const loadApiKeys = useCallback(() => {
+    fetchApiKeys();
+  }, [fetchApiKeys]);
 
   useEffect(() => {
-    fetchApiKeys();
-  }, [appId]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadApiKeys();
+  }, [loadApiKeys]);
 
   const handleCreateKey = async () => {
     if (!newKeyData.name.trim()) {

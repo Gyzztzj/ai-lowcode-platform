@@ -117,14 +117,17 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      const result = (await appsApi.getAll()) as any;
-      let apps = Array.isArray(result)
+      const result = await appsApi.getAll();
+      let apps: App[] = Array.isArray(result)
         ? result
-        : Array.isArray(result.data)
-          ? result.data
+        : result &&
+            typeof result === "object" &&
+            "data" in result &&
+            Array.isArray((result as { data?: unknown }).data)
+          ? (result as { data: App[] }).data
           : [];
       // 将 embeddingModel 的 null 转换为 'none'
-      apps = apps.map((app: any) => ({
+      apps = apps.map((app) => ({
         ...app,
         embeddingModel:
           app.embeddingModel === null ? "none" : app.embeddingModel,
@@ -141,15 +144,20 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   createApp: async (app) => {
-    const createData: any = { name: app.name || "新应用" };
-    if (app.description !== undefined) createData.description = app.description;
-    if (app.systemPrompt !== undefined)
-      createData.systemPrompt = app.systemPrompt;
-    if (app.defaultModel !== undefined)
-      createData.defaultModel = app.defaultModel;
-    if (app.embeddingModel !== undefined)
-      createData.embeddingModel = app.embeddingModel;
-    if (app.isPublic !== undefined) createData.isPublic = app.isPublic;
+    const createData = {
+      name: app.name || "新应用",
+      description:
+        app.description !== undefined
+          ? (app.description ?? undefined)
+          : undefined,
+      systemPrompt: app.systemPrompt,
+      defaultModel: app.defaultModel,
+      embeddingModel:
+        app.embeddingModel !== undefined && app.embeddingModel !== null
+          ? app.embeddingModel
+          : undefined,
+      isPublic: app.isPublic,
+    };
 
     const newApp = await appsApi.create(createData);
     // 将返回的 embeddingModel 的 null 转换为 'none'
@@ -163,7 +171,27 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   updateApp: async (id, app) => {
-    const updateData: any = { ...app };
+    const updateData: Partial<{
+      name: string;
+      description: string | null;
+      systemPrompt: string;
+      defaultModel: string;
+      embeddingModel: string;
+      isPublic: boolean;
+      nodes: unknown;
+      edges: unknown;
+    }> = {};
+    if (app.name !== undefined) updateData.name = app.name;
+    if (app.description !== undefined) updateData.description = app.description;
+    if (app.systemPrompt !== undefined)
+      updateData.systemPrompt = app.systemPrompt;
+    if (app.defaultModel !== undefined)
+      updateData.defaultModel = app.defaultModel;
+    if (app.embeddingModel !== undefined && app.embeddingModel !== null)
+      updateData.embeddingModel = app.embeddingModel;
+    if (app.isPublic !== undefined) updateData.isPublic = app.isPublic;
+    if (app.nodes !== undefined) updateData.nodes = app.nodes;
+    if (app.edges !== undefined) updateData.edges = app.edges;
     const updatedApp = await appsApi.update(id, updateData);
     // 将返回的 embeddingModel 的 null 转换为 'none'
     const processedApp = {
@@ -213,11 +241,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!force && initialized.conversations) return;
 
     try {
-      const result = (await conversationsApi.getAll()) as any;
-      let conversations = Array.isArray(result)
+      const result = await conversationsApi.getAll();
+      let conversations: Conversation[] = Array.isArray(result)
         ? result
-        : Array.isArray(result.data)
-          ? result.data
+        : result &&
+            typeof result === "object" &&
+            "data" in result &&
+            Array.isArray((result as { data?: unknown }).data)
+          ? (result as { data: Conversation[] }).data
           : [];
       if (!Array.isArray(conversations)) {
         conversations = [];
@@ -294,9 +325,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   fetchMessages: async (conversationId) => {
     set({ isLoadingMessages: true });
     try {
-      const conversation = (await conversationsApi.getById(
-        conversationId,
-      )) as any;
+      const conversation = await conversationsApi.getById(conversationId);
       const messages = conversation.messages || [];
       set({ messages, isLoadingMessages: false });
     } catch (error) {
@@ -524,7 +553,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         try {
           const title = content.slice(0, 20);
           await get().updateConversation(currentConversation.id, { title });
-        } catch (e) {
+        } catch {
           // 静默失败
         }
       }
@@ -557,7 +586,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // --- App by Id ---
   fetchAppById: async (id) => {
-    const app = (await appsApi.getById(id)) as any;
+    const app = await appsApi.getById(id);
     if (app) {
       if (!Array.isArray(app.nodes)) app.nodes = null;
       if (!Array.isArray(app.edges)) app.edges = null;
@@ -584,26 +613,30 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   saveAppFlow: async (id) => {
     const { nodes, edges } = useBuilderStore.getState();
-    const cleanedNodes = nodes.map((node: any) => ({
+    const cleanedNodes = nodes.map((node) => ({
       id: node.id,
       type: node.type,
       position: node.position,
       data: node.data,
     }));
-    const cleanedEdges = edges.map((edge: any) => ({
+    const cleanedEdges = edges.map((edge) => ({
       id: edge.id,
       source: edge.source,
       target: edge.target,
       sourceHandle: edge.sourceHandle,
       targetHandle: edge.targetHandle,
     }));
-    const savedApp = await appsApi.saveFlow(id, { nodes: cleanedNodes, edges: cleanedEdges });
-    
+    const savedApp = await appsApi.saveFlow(id, {
+      nodes: cleanedNodes,
+      edges: cleanedEdges,
+    });
+
     // 更新 currentApp，确保数据一致
     if (savedApp) {
       const processedApp = {
         ...savedApp,
-        embeddingModel: savedApp.embeddingModel === null ? "none" : savedApp.embeddingModel,
+        embeddingModel:
+          savedApp.embeddingModel === null ? "none" : savedApp.embeddingModel,
       };
       set((state) => ({
         currentApp: processedApp,
@@ -618,11 +651,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!force && initialized.knowledgeBases) return;
 
     try {
-      const result = (await knowledgeApi.getAll()) as any;
-      const knowledgeBases = Array.isArray(result)
+      const result = await knowledgeApi.getAll();
+      const knowledgeBases: KnowledgeBase[] = Array.isArray(result)
         ? result
-        : Array.isArray(result.data)
-          ? result.data
+        : result &&
+            typeof result === "object" &&
+            "data" in result &&
+            Array.isArray((result as { data?: unknown }).data)
+          ? (result as { data: KnowledgeBase[] }).data
           : [];
       set({
         knowledgeBases,
@@ -634,7 +670,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   fetchKnowledgeBaseById: async (id) => {
-    const knowledgeBase = (await knowledgeApi.getById(id)) as any;
+    const knowledgeBase = await knowledgeApi.getById(id);
     set({ currentKnowledgeBase: knowledgeBase });
   },
 
