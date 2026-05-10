@@ -5,15 +5,19 @@ import BaseNode from "./BaseNode";
 import type { NodeProps } from "@xyflow/react";
 
 const SystemPromptNode = ({ data }: NodeProps) => {
-  const nodeData = data as any;
+  const typedData = data as {
+    label?: string;
+    content?: string;
+    prompt?: string;
+  };
   return (
     <BaseNode
-      title={nodeData.label || "系统提示词"}
+      title={typedData.label || "系统提示词"}
       headerStyle={{ backgroundColor: "#faf5ff" }}
       titleStyle={{ color: "#7c3aed" }}
       description={
         <p className="line-clamp-2">
-          {nodeData.content || nodeData.prompt || "未设置提示词"}
+          {typedData.content || typedData.prompt || "未设置提示词"}
         </p>
       }
     />

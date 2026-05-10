@@ -155,9 +155,7 @@ export interface PreviewFlowRequest {
   appId?: string;
 }
 
-export interface PublishAppRequest {
-  // publish不需要额外数据
-}
+export type PublishAppRequest = object;
 
 export interface ShareChatRequest {
   userInput: string;

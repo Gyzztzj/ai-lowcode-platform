@@ -5,10 +5,10 @@ import BaseNode from "./BaseNode";
 import type { NodeProps } from "@xyflow/react";
 
 const StartNode = ({ data }: NodeProps) => {
-  const nodeData = data as any;
+  const typedData = data as { label?: string };
   return (
     <BaseNode
-      title={nodeData?.label || "开始"}
+      title={typedData?.label || "开始"}
       headerStyle={{ backgroundColor: "#f0fdf4" }}
       titleStyle={{ color: "#16a34a" }}
       hasInput={false}

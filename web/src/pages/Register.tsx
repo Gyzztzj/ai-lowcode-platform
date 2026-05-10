@@ -59,9 +59,13 @@ const Register = () => {
         description: "您的账户已创建成功",
       });
       navigate("/chat");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("注册失败:", error);
-      const errMsg = error?.response?.data?.message || "注册失败，请稍后重试";
+      const errMsg =
+        (error && typeof error === "object" && "response" in error && 
+          typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === "string")
+          ? (error as { response: { data: { message: string } } }).response.data.message
+          : "注册失败，请稍后重试";
       setErrorMessage(errMsg);
       toast.error("注册失败", {
         description: errMsg,

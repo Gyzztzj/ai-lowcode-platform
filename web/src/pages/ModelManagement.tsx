@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -42,7 +42,7 @@ const ModelManagement = () => {
   );
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
 
-  const fetchModels = async () => {
+  const fetchModels = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await modelManagementApi.getAll();
@@ -53,11 +53,16 @@ const ModelManagement = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  const loadModels = useCallback(() => {
+    fetchModels();
+  }, [fetchModels]);
 
   useEffect(() => {
-    fetchModels();
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadModels();
+  }, [loadModels]);
 
   const handleEditModel = (model: Model) => {
     setSelectedModel(model);

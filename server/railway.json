@@ -23,7 +23,7 @@
     }
   },
   "deploy": {
-    "healthcheckPath": "/api",
+    "healthcheckPath": "/api/health",
     "startCommand": "pnpm start:prod"
   }
 }

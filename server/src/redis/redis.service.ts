@@ -17,8 +17,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       db: url.pathname ? parseInt(url.pathname.slice(1)) : 0,
       password: url.password || undefined,
     });
-    this.client.on('error', (error) => {
-    });
+    this.client.on('error', (_error) => {});
   }
 
   onModuleDestroy() {

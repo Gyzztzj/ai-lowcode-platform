@@ -72,7 +72,7 @@ const KnowledgeDetail = () => {
       });
       // 刷新知识库信息
       fetchKnowledgeBaseById(id);
-    } catch (error) {
+    } catch {
       toast.error("上传失败", {
         description: "请稍后重试",
       });

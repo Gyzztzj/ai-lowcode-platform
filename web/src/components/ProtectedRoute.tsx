@@ -12,17 +12,19 @@ const ProtectedRoute = () => {
   useEffect(() => {
     const localStorageToken = localStorage.getItem("token");
 
+    const complete = () => {
+      setLoadingComplete(true);
+    };
+
     // 如果没有 token 或者有 user，直接完成
     if (!localStorageToken || user) {
-      setLoadingComplete(true);
+      complete();
       return;
     }
 
     // 如果有 token 但没有 user，尝试获取用户信息
     if (localStorageToken && !user) {
-      fetchCurrentUser().finally(() => {
-        setLoadingComplete(true);
-      });
+      fetchCurrentUser().finally(complete);
     }
   }, [user, fetchCurrentUser]);
 
