@@ -47,6 +47,14 @@ export enum Permission {
   DELETE_MODELS = 'delete:models',
 
   /**
+   * 角色管理权限
+   */
+  READ_ROLES = 'read:roles',
+  WRITE_ROLES = 'write:roles',
+  DELETE_ROLES = 'delete:roles',
+  MANAGE_ROLES = 'manage:roles',
+
+  /**
    * 管理员权限
    */
   ADMIN = 'admin',

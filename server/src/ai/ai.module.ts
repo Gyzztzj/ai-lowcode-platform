@@ -7,11 +7,15 @@ import { RerankerService } from './reranker.service';
 import { User } from '../entities';
 import { Model } from '../entities/model.entity';
 import { RAGModule } from '../rag/rag.module';
+import { OpenAiModule } from '../openai/openai.module';
+import { QuotaModule } from '../quota/quota.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Model]),
     forwardRef(() => RAGModule),
+    OpenAiModule,
+    QuotaModule,
   ],
   providers: [AiService, EmbeddingService, RerankerService],
   controllers: [AiController],

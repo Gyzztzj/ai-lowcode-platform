@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { MessageSquare, Settings, Cpu } from "lucide-react";
+import { MessageSquare, Settings, Cpu, Shield, BarChart3 } from "lucide-react";
 import { BookOpen } from "lucide-react";
 
 const Sidebar = () => {
@@ -26,6 +26,16 @@ const Sidebar = () => {
       path: "/knowledge",
       name: "知识库管理",
       icon: <BookOpen className="h-5 w-5" />,
+    },
+    {
+      path: "/roles",
+      name: "角色管理",
+      icon: <Shield className="h-5 w-5" />,
+    },
+    {
+      path: "/quota",
+      name: "配额管理",
+      icon: <BarChart3 className="h-5 w-5" />,
     },
   ];
 
