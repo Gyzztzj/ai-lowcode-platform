@@ -35,7 +35,7 @@ const RoleManagement = () => {
   const fetchRoles = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await api.get('/roles');
+      const data = (await api.get('/roles')) as unknown as Role[];
       setRoles(data);
     } catch (error) {
       console.error('获取角色列表失败:', error);
@@ -45,14 +45,10 @@ const RoleManagement = () => {
     }
   }, []);
 
-  const loadRoles = useCallback(() => {
-    fetchRoles();
-  }, [fetchRoles]);
-
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    loadRoles();
-  }, [loadRoles]);
+    fetchRoles();
+  }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleEditRole = (role: Role) => {

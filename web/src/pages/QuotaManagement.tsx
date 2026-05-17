@@ -21,6 +21,13 @@ interface UserFromApi {
   name: string;
 }
 
+interface QuotaInfo {
+  dailyQuota: number;
+  monthlyQuota: number;
+  dailyUsed: number;
+  monthlyUsed: number;
+}
+
 interface UserQuota {
   id: string;
   email: string;
@@ -65,7 +72,8 @@ const QuotaManagement = () => {
       const userList: UserFromApi[] = await api.get('/users');
       const usersWithQuota: UserQuota[] = await Promise.all(
         userList.map(async (user: UserFromApi) => {
-          const quotaData = await api.get(`/quota/user/${user.id}`);
+          const quotaData = (await api.get(`/quota/user/${user.id}`)) as unknown as QuotaInfo;
+
           return {
             id: user.id,
             email: user.email,
@@ -113,7 +121,7 @@ const QuotaManagement = () => {
     } else {
       fetchApps();
     }
-  }, [activeTab, fetchUsers, fetchApps]);
+  }, [activeTab]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleEdit = (item: UserQuota | AppQuota) => {

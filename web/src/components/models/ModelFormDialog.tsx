@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Alert } from "@/components/ui/alert";
 import { toast } from "sonner";
 import type { Model } from "@/types";
 import type { CreateModelRequest, UpdateModelRequest } from "@/types/api.types";
@@ -177,11 +178,9 @@ const ModelFormDialog = ({
 
         <DialogContentScrollable>
           {isSystemModel && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-2 mt-4">
-              <p className="text-amber-700 text-sm">
-                这是系统模型，您只能修改启用状态，其他配置无法修改。
-              </p>
-            </div>
+            <Alert variant="warning" className="mb-2 mt-4">
+              这是系统模型，您只能修改启用状态，其他配置无法修改。
+            </Alert>
           )}
 
           <div className="space-y-4 py-4">

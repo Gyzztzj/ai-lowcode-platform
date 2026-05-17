@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Alert } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
 
@@ -164,9 +165,9 @@ const RoleFormDialog = ({ open, onOpenChange, role, onSuccess }: RoleFormDialogP
 
         <DialogContentScrollable>
           {isSystemRole && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-2 mt-4">
-              <p className="text-amber-700 text-sm">这是系统角色，您无法修改其配置。</p>
-            </div>
+            <Alert variant="warning" className="mb-2 mt-4">
+              这是系统角色，您无法修改其配置。
+            </Alert>
           )}
 
           <div className="space-y-4 py-4">
@@ -218,7 +219,7 @@ const RoleFormDialog = ({ open, onOpenChange, role, onSuccess }: RoleFormDialogP
                         >
                           <Checkbox
                             checked={formData.permissions.includes(permission.key)}
-                            onChange={() => togglePermission(permission.key)}
+                            onCheckedChange={() => togglePermission(permission.key)}
                             disabled={isSystemRole}
                           />
                           <span className="text-sm text-gray-700">{permission.label}</span>

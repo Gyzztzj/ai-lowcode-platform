@@ -1,32 +1,27 @@
-import axios, {
-  type AxiosError,
-  type InternalAxiosRequestConfig,
-  type AxiosResponse,
-} from "axios";
-import { toast } from "sonner";
-import { authApi } from "./api-client";
-import { useUserStore } from "@/store/userStore";
+import axios, { type AxiosError, type InternalAxiosRequestConfig, type AxiosResponse } from 'axios';
+import { toast } from 'sonner';
+import { authApi } from './api-client';
+import { useUserStore } from '@/store/userStore';
 
 // 优先使用运行时注入的环境变量，回退到构建时环境变量
 const getApiUrl = () => {
   let apiUrl: string;
   // 使用类型守卫处理 window 对象
   const runtimeEnv =
-    window && typeof window === "object" && "__ENV__" in window
-      ? (window as { __ENV__?: { VITE_API_URL?: string } }).__ENV__
-          ?.VITE_API_URL
+    window && typeof window === 'object' && '__ENV__' in window
+      ? (window as { __ENV__?: { VITE_API_URL?: string } }).__ENV__?.VITE_API_URL
       : undefined;
-  if (runtimeEnv && runtimeEnv !== "VITE_API_URL_PLACEHOLDER") {
+  if (runtimeEnv && runtimeEnv !== 'VITE_API_URL_PLACEHOLDER') {
     apiUrl = runtimeEnv;
   } else {
-    apiUrl = import.meta.env.VITE_API_URL || "/api";
+    apiUrl = import.meta.env.VITE_API_URL || '/api';
   }
 
   // 如果配置了完整的 http(s) 地址，确保以 /api 结尾
-  if (apiUrl.startsWith("http")) {
-    if (!apiUrl.endsWith("/api")) {
+  if (apiUrl.startsWith('http')) {
+    if (!apiUrl.endsWith('/api')) {
       // 如果没有 /api 结尾，添加它
-      return apiUrl.replace(/\/$/, "") + "/api";
+      return apiUrl.replace(/\/$/, '') + '/api';
     }
   }
   return apiUrl;
@@ -53,16 +48,16 @@ function onTokenRefreshed(token: string) {
 // 请求拦截器：添加认证token
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     // 对于 FormData，让浏览器自动设置 Content-Type
     if (config.data instanceof FormData && config.headers) {
-      delete config.headers["Content-Type"];
-    } else if (config.headers && !config.headers["Content-Type"]) {
+      delete config.headers['Content-Type'];
+    } else if (config.headers && !config.headers['Content-Type']) {
       // 对于非 FormData 请求，默认设置为 application/json
-      config.headers["Content-Type"] = "application/json";
+      config.headers['Content-Type'] = 'application/json';
     }
     return config;
   },
@@ -80,9 +75,9 @@ api.interceptors.response.use(
       data?: unknown;
     };
     if (result.code === 0) {
-      return result.data as AxiosResponse["data"];
+      return result.data as AxiosResponse['data'];
     }
-    throw new Error(result.message || "请求失败");
+    throw new Error(result.message || '请求失败');
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & {
@@ -109,9 +104,9 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = localStorage.getItem("refreshToken");
+        const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) {
-          throw new Error("没有刷新令牌");
+          throw new Error('没有刷新令牌');
         }
 
         // 调用刷新token接口
@@ -119,8 +114,8 @@ api.interceptors.response.use(
         const { accessToken, refreshToken: newRefreshToken } = response;
 
         // 更新token存储
-        localStorage.setItem("token", accessToken);
-        localStorage.setItem("refreshToken", newRefreshToken);
+        localStorage.setItem('token', accessToken);
+        localStorage.setItem('refreshToken', newRefreshToken);
 
         // 更新store
         const userStore = useUserStore.getState();
@@ -136,28 +131,28 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         // 刷新失败，清除token并登出
-        console.error("Token刷新失败:", refreshError);
+        console.error('Token刷新失败:', refreshError);
 
         // 清除所有token
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
 
         // 更新store状态
         const userStore = useUserStore.getState();
         userStore.logout();
 
         // 通知等待的请求刷新失败
-        onTokenRefreshed("");
+        onTokenRefreshed('');
 
         // 如果不是登录页面，才显示错误并跳转
-        if (!window.location.pathname.includes("/login")) {
-          toast.error("登录已过期，请重新登录", {
-            description: "请重新登录",
+        if (!window.location.pathname.includes('/login')) {
+          toast.error('登录已过期，请重新登录', {
+            description: '请重新登录',
           });
 
           // 使用 replace 避免重复历史记录
-          if (window.location.pathname !== "/login") {
-            window.location.replace("/login");
+          if (window.location.pathname !== '/login') {
+            window.location.replace('/login');
           }
         }
         return Promise.reject(refreshError);
@@ -166,47 +161,47 @@ api.interceptors.response.use(
       }
     } else if (error.response?.status === 401) {
       // 如果是第二次401或者重试失败
-      console.error("认证失败，清除token");
-      localStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
+      console.error('认证失败，清除token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
 
       const userStore = useUserStore.getState();
       userStore.logout();
 
-      if (!window.location.pathname.includes("/login")) {
-        window.location.replace("/login");
+      if (!window.location.pathname.includes('/login')) {
+        window.location.replace('/login');
       }
     }
 
     // 其他错误处理
     if (error.response) {
       const errorData = error.response.data as { message?: string };
-      const errorMsg = errorData.message || "服务器错误";
+      const errorMsg = errorData.message || '服务器错误';
 
       // 根据 HTTP 状态码给出更明确的错误提示
-      let errorTitle = "请求失败";
+      let errorTitle = '请求失败';
       if (error.response.status === 400) {
-        errorTitle = "请求参数错误";
+        errorTitle = '请求参数错误';
       } else if (error.response.status === 401) {
-        errorTitle = "未授权";
+        errorTitle = '未授权';
       } else if (error.response.status === 403) {
-        errorTitle = "无权限访问";
+        errorTitle = '无权限访问';
       } else if (error.response.status === 404) {
-        errorTitle = "资源不存在";
+        errorTitle = '资源不存在';
       } else if (error.response.status >= 500) {
-        errorTitle = "服务器错误";
+        errorTitle = '服务器错误';
       }
 
       toast.error(errorTitle, {
         description: errorMsg,
       });
     } else if (error.request) {
-      toast.error("网络错误", {
-        description: "无法连接到服务器，请检查您的网络连接",
+      toast.error('网络错误', {
+        description: '无法连接到服务器，请检查您的网络连接',
       });
     } else {
-      toast.error("请求错误", {
-        description: error.message || "请求配置错误",
+      toast.error('请求错误', {
+        description: error.message || '请求配置错误',
       });
     }
 
