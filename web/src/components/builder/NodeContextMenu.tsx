@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import type { Node as ReactFlowNode } from "@xyflow/react";
-import { Settings, Copy, Trash2 } from "lucide-react";
-import { useBuilderStore } from "@/store/builderStore";
-import { v4 as uuidv4 } from "uuid";
+import { useEffect, useRef, useState } from 'react';
+import type { Node as ReactFlowNode } from '@xyflow/react';
+import { Settings, Copy, Trash2 } from 'lucide-react';
+import { useBuilderStore } from '@/store/builderStore';
+import { v4 as uuidv4 } from 'uuid';
+import { Button } from '@/components/ui/button';
 
 interface NodeContextMenuProps {
   node: ReactFlowNode | null;
@@ -11,12 +12,7 @@ interface NodeContextMenuProps {
   onEditProperties: () => void;
 }
 
-const NodeContextMenu = ({
-  node,
-  position,
-  onClose,
-  onEditProperties,
-}: NodeContextMenuProps) => {
+const NodeContextMenu = ({ node, position, onClose, onEditProperties }: NodeContextMenuProps) => {
   const { deleteNode, addNode } = useBuilderStore();
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuPosition, setMenuPosition] = useState(position);
@@ -31,14 +27,14 @@ const NodeContextMenu = ({
     const handleScroll = () => onClose();
     const handleResize = () => onClose();
 
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("scroll", handleScroll);
-    window.addEventListener("resize", handleResize);
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleResize);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
     };
   }, [onClose]);
 
@@ -89,29 +85,32 @@ const NodeContextMenu = ({
       className="fixed z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[160px]"
       style={{ left: menuPosition.x, top: menuPosition.y }}
     >
-      <button
-        className="w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-100"
+      <Button
+        variant="ghost"
+        className="w-full px-4 py-2 text-left text-sm h-auto justify-start"
         onClick={onEditProperties}
       >
-        <Settings className="w-4 h-4" />
+        <Settings className="w-4 h-4 mr-2" />
         编辑属性
-      </button>
-      {node.type !== "start" && node.type !== "end" && (
+      </Button>
+      {node.type !== 'start' && node.type !== 'end' && (
         <>
-          <button
-            className="w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-100"
+          <Button
+            variant="ghost"
+            className="w-full px-4 py-2 text-left text-sm h-auto justify-start"
             onClick={handleCopy}
           >
-            <Copy className="w-4 h-4" />
+            <Copy className="w-4 h-4 mr-2" />
             复制节点
-          </button>
-          <button
-            className="w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-100 text-red-600"
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full px-4 py-2 text-left text-sm h-auto justify-start text-red-600 hover:text-red-600 hover:bg-red-50"
             onClick={handleDelete}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4 mr-2" />
             删除节点
-          </button>
+          </Button>
         </>
       )}
     </div>

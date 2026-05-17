@@ -36,6 +36,12 @@ export class User {
   @Column({ type: 'simple-array', nullable: true })
   permissions: string[];
 
+  @Column({ type: 'int', default: 1000 })
+  dailyQuota: number;
+
+  @Column({ type: 'int', default: 30000 })
+  monthlyQuota: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

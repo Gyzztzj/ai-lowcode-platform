@@ -52,6 +52,12 @@ export class App {
   @Column({ type: 'text', nullable: true })
   knowledgeBaseId: string | null;
 
+  @Column({ type: 'int', nullable: true })
+  dailyQuota: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  monthlyQuota: number | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

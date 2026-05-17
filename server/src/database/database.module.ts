@@ -18,6 +18,7 @@ import {
   PasswordResetToken,
   Model,
 } from '../entities';
+import { RoleEntity } from '../roles/entities/role.entity';
 import { SeedService } from './seed.service';
 import { ChunkRepository } from '../repositories/chunk.repository';
 
@@ -44,6 +45,7 @@ import { ChunkRepository } from '../repositories/chunk.repository';
           RefreshToken,
           PasswordResetToken,
           Model,
+          RoleEntity,
         ],
         synchronize: true,
         logging: process.env.NODE_ENV !== 'production',

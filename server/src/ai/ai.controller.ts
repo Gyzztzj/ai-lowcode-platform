@@ -1,10 +1,19 @@
-import { Controller, Post, Body, UseGuards, Get, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Get,
+  Res,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AiService } from './ai.service';
 import { ChatDto } from './dto/chat.dto';
 import { RerankDto } from './dto/rerank.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import type { Response } from 'express';
 import { RerankerService } from './reranker.service';
+import { QuotaInterceptor } from '../quota/quota.interceptor';
 
 @Controller('ai')
 @UseGuards(JwtAuthGuard)
@@ -16,6 +25,7 @@ export class AiController {
 
   // 普通对话
   @Post('chat')
+  @UseInterceptors(QuotaInterceptor)
   async chat(@Body() chatDto: ChatDto) {
     return (await this.aiService.chat(chatDto)) as {
       content: string;
@@ -26,6 +36,7 @@ export class AiController {
 
   // 流式对话
   @Post('chat-stream')
+  @UseInterceptors(QuotaInterceptor)
   async chatStream(@Body() chatDto: ChatDto, @Res() res: Response) {
     // 设置SSE响应头
     res.setHeader('Content-Type', 'text/event-stream');

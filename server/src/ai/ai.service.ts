@@ -6,6 +6,7 @@ import axios from 'axios';
 import { ChatDto, ChatModel } from './dto/chat.dto';
 import { Readable } from 'stream';
 import { Model } from '../entities/model.entity';
+import { OpenaiService } from '../openai/openai.service';
 
 // 类型定义
 interface Message {
@@ -52,7 +53,7 @@ type AiResponse =
   | {
       content: string;
       model: string;
-      usage: Usage;
+      usage?: Usage;
     };
 
 @Injectable()
@@ -69,6 +70,7 @@ export class AiService {
     private configService: ConfigService,
     @InjectRepository(Model)
     private modelRepository: Repository<Model>,
+    private openaiService: OpenaiService,
   ) {
     this.doubaoApiKey = this.configService.get('DOUBAO_CHAT_API_KEY') as string;
     this.doubaoModel = this.configService.get(
@@ -119,6 +121,14 @@ export class AiService {
         stream,
         temperature,
         max_tokens,
+      );
+    } else if (model.startsWith('gpt')) {
+      return this.openaiService.chat(
+        messages,
+        model,
+        temperature,
+        max_tokens,
+        stream,
       );
     } else {
       throw new BadRequestException(`不支持的模型: ${model}`);
@@ -328,6 +338,8 @@ export class AiService {
    * @returns 可用的AI模型列表
    */
   getAvailableModels() {
+    const openaiModels = this.openaiService.getAvailableModels();
+
     return [
       {
         id: ChatModel.DOUBAO_SEED_2_0_PRO,
@@ -343,6 +355,7 @@ export class AiService {
         description: '通义千问高速模型，适合日常对话',
         type: 'CHAT',
       },
+      ...openaiModels,
       {
         id: 'doubao-embedding-vision-251215',
         name: '豆包 Embedding Text',

@@ -11,7 +11,7 @@ import {
   Headers,
   Ip,
 } from '@nestjs/common';
-import { OpenAiService } from './openai.service';
+import { OpenaiService } from './openai.service';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
 import { ApiKeyGuard } from '../guards/api-key.guard';
 import { RateLimit, RateLimitGuard } from '../guards/rate-limit.guard';
@@ -19,7 +19,7 @@ import { RateLimit, RateLimitGuard } from '../guards/rate-limit.guard';
 @Controller('v1')
 @UseGuards(ApiKeyGuard, RateLimitGuard)
 export class OpenAiController {
-  constructor(private readonly openAiService: OpenAiService) {}
+  constructor(private readonly openAiService: OpenaiService) {}
 
   @Post('chat/completions')
   @HttpCode(HttpStatus.OK)

@@ -22,6 +22,10 @@ export enum ChatModel {
   QWEN_MAX = 'qwen-max',
   QWEN_MAX_2025_03_25 = 'qwen-max-2025-03-25',
   QVQ_MAX_2025_03_25 = 'qvq-max-2025-03-25',
+  GPT_3_5_TURBO = 'gpt-3.5-turbo',
+  GPT_3_5_TURBO_16K = 'gpt-3.5-turbo-16k',
+  GPT_4 = 'gpt-4',
+  GPT_4_TURBO = 'gpt-4-turbo',
 }
 
 export class MessageDto {

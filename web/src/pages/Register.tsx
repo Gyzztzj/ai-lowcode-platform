@@ -20,6 +20,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { Alert } from "@/components/ui/alert";
 import { toast } from "sonner";
 
 const registerSchema = z
@@ -85,9 +86,7 @@ const Register = () => {
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {errorMessage && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-3">
-                {errorMessage}
-              </div>
+              <Alert variant="destructive">{errorMessage}</Alert>
             )}
             <FieldGroup>
               <Controller

@@ -1,6 +1,6 @@
-import { useUserStore } from "@/store/userStore";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { useUserStore } from '@/store/userStore';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,7 +8,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 const Header = () => {
   const { user, logout } = useUserStore();
@@ -21,13 +21,11 @@ const Header = () => {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarFallback>
-                {user?.name?.charAt(0) || user?.email.charAt(0)}
-              </AvatarFallback>
+              <AvatarFallback>{user?.name?.charAt(0) || user?.email.charAt(0)}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-36">
           <DropdownMenuLabel>我的账户</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="text-sm">{user?.email}</DropdownMenuItem>

@@ -18,6 +18,9 @@ import { PublicApiModule } from './public-api/public-api.module';
 import { SystemConfigModule } from './system-config/system-config.module';
 import { RAGModule } from './rag/rag.module';
 import { ModelsModule } from './models/models.module';
+import { RolesModule } from './roles/roles.module';
+import { QuotaModule } from './quota/quota.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -43,6 +46,9 @@ import { ModelsModule } from './models/models.module';
     PublicApiModule,
     SystemConfigModule,
     ModelsModule,
+    RolesModule,
+    QuotaModule,
+    UsersModule,
   ],
   controllers: [],
   providers: [],

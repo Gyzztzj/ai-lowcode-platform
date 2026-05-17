@@ -1,6 +1,6 @@
-import { useState } from "react";
-import type { App } from "@/types";
-import { useAppStore } from "@/store/appStore";
+import { useState } from 'react';
+import type { App } from '@/types';
+import { useAppStore } from '@/store/appStore';
 import {
   Card,
   CardContent,
@@ -8,10 +8,11 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Edit, Settings, Trash2 } from "lucide-react";
-import EditAppDialog from "./EditAppDialog";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Edit, Settings, Trash2 } from 'lucide-react';
+import EditAppDialog from './EditAppDialog';
 
 interface AppCardProps {
   app: App;
@@ -19,12 +20,15 @@ interface AppCardProps {
 
 const AppCard = ({ app }: AppCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const { deleteApp } = useAppStore();
 
-  const handleDelete = async () => {
-    if (confirm("确定要删除这个应用吗？")) {
-      await deleteApp(app.id);
-    }
+  const handleDelete = () => {
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    await deleteApp(app.id);
   };
 
   return (
@@ -33,7 +37,7 @@ const AppCard = ({ app }: AppCardProps) => {
         <CardHeader>
           <CardTitle className="text-lg">{app.name}</CardTitle>
           <CardDescription className="line-clamp-2">
-            {app.description || "暂无描述"}
+            {app.description || '暂无描述'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -42,7 +46,7 @@ const AppCard = ({ app }: AppCardProps) => {
             <p className="line-clamp-2">系统提示: {app.systemPrompt}</p>
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex justify-between">
           <Button
             variant="ghost"
             size="sm"
@@ -51,30 +55,25 @@ const AppCard = ({ app }: AppCardProps) => {
             <Edit className="h-4 w-4 mr-1" />
             编辑流程
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsEditDialogOpen(true)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => setIsEditDialogOpen(true)}>
             <Settings className="h-4 w-4 mr-1" />
             基本信息
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-red-600"
-            onClick={handleDelete}
-          >
+          <Button variant="ghost" size="sm" className="text-red-600" onClick={handleDelete}>
             <Trash2 className="h-4 w-4 mr-1" />
             删除
           </Button>
         </CardFooter>
       </Card>
 
-      <EditAppDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        app={app}
+      <EditAppDialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} app={app} />
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="删除应用"
+        description="确定要删除这个应用吗？"
+        onConfirm={confirmDelete}
       />
     </>
   );
