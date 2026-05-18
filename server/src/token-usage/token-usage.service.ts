@@ -4,7 +4,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, Between, FindOptionsWhere } from 'typeorm';
-import { TokenUsage } from '../entities';
+import { TokenUsage, Model } from '../entities';
 import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Injectable()
@@ -12,6 +12,8 @@ export class TokenUsageService {
   constructor(
     @InjectRepository(TokenUsage)
     private tokenUsageRepository: Repository<TokenUsage>,
+    @InjectRepository(Model)
+    private modelRepository: Repository<Model>,
     private dataSource: DataSource,
   ) {}
 
@@ -434,5 +436,399 @@ export class TokenUsageService {
    */
   estimateTokens(text: string): number {
     return Math.ceil(text.length / 4);
+  }
+
+  private async getModelPricing(
+    modelName: string | null,
+  ): Promise<{ promptPrice: number; completionPrice: number }> {
+    if (!modelName) {
+      return { promptPrice: 0.0015, completionPrice: 0.002 };
+    }
+
+    const model = await this.modelRepository.findOne({
+      where: { modelId: modelName },
+    });
+
+    if (model && model.promptTokenPrice > 0 && model.completionTokenPrice > 0) {
+      return {
+        promptPrice: model.promptTokenPrice,
+        completionPrice: model.completionTokenPrice,
+      };
+    }
+
+    const defaultPricing: Record<
+      string,
+      { prompt: number; completion: number }
+    > = {
+      'gpt-4o': { prompt: 0.005, completion: 0.015 },
+      'gpt-4o-mini': { prompt: 0.00015, completion: 0.0006 },
+      'gpt-4-turbo': { prompt: 0.01, completion: 0.03 },
+      'gpt-3.5-turbo': { prompt: 0.0015, completion: 0.002 },
+      'doubao-3-5-pro': { prompt: 0.0008, completion: 0.0012 },
+      'doubao-4': { prompt: 0.002, completion: 0.004 },
+    };
+
+    const match = Object.keys(defaultPricing).find((key) =>
+      modelName.toLowerCase().includes(key.toLowerCase()),
+    );
+
+    if (match) {
+      return {
+        promptPrice: defaultPricing[match].prompt,
+        completionPrice: defaultPricing[match].completion,
+      };
+    }
+
+    return { promptPrice: 0.0015, completionPrice: 0.002 };
+  }
+
+  async getUserCostStats(
+    userId: string,
+    filters?: {
+      apiKeyId?: string;
+      appId?: string;
+      startDate?: Date;
+      endDate?: Date;
+    },
+  ): Promise<{
+    totalCost: number;
+    promptCost: number;
+    completionCost: number;
+    totalTokens: number;
+    promptTokens: number;
+    completionTokens: number;
+    requestCount: number;
+  }> {
+    const where: FindOptionsWhere<TokenUsage> = { userId };
+
+    if (filters?.apiKeyId) {
+      where.apiKeyId = filters.apiKeyId;
+    }
+
+    if (filters?.appId) {
+      where.appId = filters.appId;
+    }
+
+    if (filters?.startDate && filters?.endDate) {
+      where.createdAt = Between(filters.startDate, filters.endDate);
+    }
+
+    const usages = await this.tokenUsageRepository.find({ where });
+
+    let totalCost = 0;
+    let promptCost = 0;
+    let completionCost = 0;
+    let totalTokens = 0;
+    let promptTokens = 0;
+    let completionTokens = 0;
+
+    for (const usage of usages) {
+      const pricing = await this.getModelPricing(usage.model);
+
+      const pCost = (usage.promptTokens / 1000) * pricing.promptPrice;
+      const cCost = (usage.completionTokens / 1000) * pricing.completionPrice;
+
+      promptCost += pCost;
+      completionCost += cCost;
+      totalCost += pCost + cCost;
+      totalTokens += usage.totalTokens;
+      promptTokens += usage.promptTokens;
+      completionTokens += usage.completionTokens;
+    }
+
+    return {
+      totalCost: Number(totalCost.toFixed(6)),
+      promptCost: Number(promptCost.toFixed(6)),
+      completionCost: Number(completionCost.toFixed(6)),
+      totalTokens,
+      promptTokens,
+      completionTokens,
+      requestCount: usages.length,
+    };
+  }
+
+  async getDailyCostStats(
+    userId: string,
+    days: number = 30,
+    filters?: {
+      apiKeyId?: string;
+      appId?: string;
+    },
+  ): Promise<
+    Array<{
+      date: string;
+      totalCost: number;
+      totalTokens: number;
+      requestCount: number;
+    }>
+  > {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const queryBuilder = this.tokenUsageRepository
+      .createQueryBuilder('tokenUsage')
+      .select('DATE(tokenUsage.createdAt)', 'date')
+      .addSelect('ARRAY_AGG(tokenUsage.model)', 'models')
+      .addSelect('ARRAY_AGG(tokenUsage.promptTokens)', 'promptTokens')
+      .addSelect('ARRAY_AGG(tokenUsage.completionTokens)', 'completionTokens')
+      .addSelect('ARRAY_AGG(tokenUsage.totalTokens)', 'totalTokens')
+      .addSelect('COUNT(*)', 'requestCount')
+      .where('tokenUsage.userId = :userId', { userId })
+      .andWhere('tokenUsage.createdAt >= :startDate', { startDate });
+
+    if (filters?.apiKeyId) {
+      queryBuilder.andWhere('tokenUsage.apiKeyId = :apiKeyId', {
+        apiKeyId: filters.apiKeyId,
+      });
+    }
+
+    if (filters?.appId) {
+      queryBuilder.andWhere('tokenUsage.appId = :appId', {
+        appId: filters.appId,
+      });
+    }
+
+    const result = await queryBuilder
+      .groupBy('DATE(tokenUsage.createdAt)')
+      .orderBy('date', 'ASC')
+      .getRawMany();
+
+    const dailyStats: Array<{
+      date: string;
+      totalCost: number;
+      totalTokens: number;
+      requestCount: number;
+    }> = [];
+    for (const item of result) {
+      let totalCost = 0;
+      let totalTokens = 0;
+      const models = item.models || [];
+      const promptTokensArr = item.prompttokens || [];
+      const completionTokensArr = item.completiontokens || [];
+      const totalTokensArr = item.totaltokens || [];
+
+      for (let i = 0; i < models.length; i++) {
+        const pricing = await this.getModelPricing(models[i]);
+        const pCost = (Number(promptTokensArr[i]) / 1000) * pricing.promptPrice;
+        const cCost =
+          (Number(completionTokensArr[i]) / 1000) * pricing.completionPrice;
+        totalCost += pCost + cCost;
+        totalTokens += Number(totalTokensArr[i]) || 0;
+      }
+
+      dailyStats.push({
+        date: item.date as string,
+        totalCost: Number(totalCost.toFixed(6)),
+        totalTokens,
+        requestCount: Number(item.requestcount) || 0,
+      });
+    }
+
+    return dailyStats;
+  }
+
+  async getMonthlyCostStats(
+    userId: string,
+    months: number = 12,
+    filters?: {
+      apiKeyId?: string;
+      appId?: string;
+    },
+  ): Promise<
+    Array<{
+      month: string;
+      totalCost: number;
+      totalTokens: number;
+      requestCount: number;
+    }>
+  > {
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - months);
+
+    const queryBuilder = this.tokenUsageRepository
+      .createQueryBuilder('tokenUsage')
+      .select("TO_CHAR(tokenUsage.createdAt, 'YYYY-MM')", 'month')
+      .addSelect('ARRAY_AGG(tokenUsage.model)', 'models')
+      .addSelect('ARRAY_AGG(tokenUsage.promptTokens)', 'promptTokens')
+      .addSelect('ARRAY_AGG(tokenUsage.completionTokens)', 'completionTokens')
+      .addSelect('ARRAY_AGG(tokenUsage.totalTokens)', 'totalTokens')
+      .addSelect('COUNT(*)', 'requestCount')
+      .where('tokenUsage.userId = :userId', { userId })
+      .andWhere('tokenUsage.createdAt >= :startDate', { startDate });
+
+    if (filters?.apiKeyId) {
+      queryBuilder.andWhere('tokenUsage.apiKeyId = :apiKeyId', {
+        apiKeyId: filters.apiKeyId,
+      });
+    }
+
+    if (filters?.appId) {
+      queryBuilder.andWhere('tokenUsage.appId = :appId', {
+        appId: filters.appId,
+      });
+    }
+
+    const result = await queryBuilder
+      .groupBy("TO_CHAR(tokenUsage.createdAt, 'YYYY-MM')")
+      .orderBy('month', 'ASC')
+      .getRawMany();
+
+    const monthlyStats: Array<{
+      month: string;
+      totalCost: number;
+      totalTokens: number;
+      requestCount: number;
+    }> = [];
+    for (const item of result) {
+      let totalCost = 0;
+      let totalTokens = 0;
+      const models = item.models || [];
+      const promptTokensArr = item.prompttokens || [];
+      const completionTokensArr = item.completiontokens || [];
+      const totalTokensArr = item.totaltokens || [];
+
+      for (let i = 0; i < models.length; i++) {
+        const pricing = await this.getModelPricing(models[i]);
+        const pCost = (Number(promptTokensArr[i]) / 1000) * pricing.promptPrice;
+        const cCost =
+          (Number(completionTokensArr[i]) / 1000) * pricing.completionPrice;
+        totalCost += pCost + cCost;
+        totalTokens += Number(totalTokensArr[i]) || 0;
+      }
+
+      monthlyStats.push({
+        month: item.month as string,
+        totalCost: Number(totalCost.toFixed(6)),
+        totalTokens,
+        requestCount: Number(item.requestcount) || 0,
+      });
+    }
+
+    return monthlyStats;
+  }
+
+  async getModelCostStats(
+    userId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<
+    Array<{
+      model: string | null;
+      totalCost: number;
+      totalTokens: number;
+      requestCount: number;
+    }>
+  > {
+    const queryBuilder = this.tokenUsageRepository
+      .createQueryBuilder('tokenUsage')
+      .select('tokenUsage.model', 'model')
+      .addSelect('SUM(tokenUsage.promptTokens)', 'promptTokens')
+      .addSelect('SUM(tokenUsage.completionTokens)', 'completionTokens')
+      .addSelect('SUM(tokenUsage.totalTokens)', 'totalTokens')
+      .addSelect('COUNT(*)', 'requestCount')
+      .where('tokenUsage.userId = :userId', { userId });
+
+    if (startDate && endDate) {
+      queryBuilder.andWhere(
+        'tokenUsage.createdAt BETWEEN :startDate AND :endDate',
+        { startDate, endDate },
+      );
+    }
+
+    const result = await queryBuilder
+      .groupBy('tokenUsage.model')
+      .orderBy('SUM(tokenUsage.totalTokens)', 'DESC')
+      .getRawMany();
+
+    const modelStats: Array<{
+      model: string | null;
+      totalCost: number;
+      totalTokens: number;
+      requestCount: number;
+    }> = [];
+    for (const item of result) {
+      const pricing = await this.getModelPricing(item.model);
+      const promptCost =
+        (Number(item.prompttokens) / 1000) * pricing.promptPrice;
+      const completionCost =
+        (Number(item.completiontokens) / 1000) * pricing.completionPrice;
+
+      modelStats.push({
+        model: item.model as string | null,
+        totalCost: Number((promptCost + completionCost).toFixed(6)),
+        totalTokens: Number(item.totaltokens) || 0,
+        requestCount: Number(item.requestcount) || 0,
+      });
+    }
+
+    return modelStats;
+  }
+
+  async getAppCostStats(
+    userId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<
+    Array<{
+      appId: string | null;
+      totalCost: number;
+      totalTokens: number;
+      requestCount: number;
+    }>
+  > {
+    const queryBuilder = this.tokenUsageRepository
+      .createQueryBuilder('tokenUsage')
+      .select('tokenUsage.appId', 'appId')
+      .addSelect('ARRAY_AGG(tokenUsage.model)', 'models')
+      .addSelect('ARRAY_AGG(tokenUsage.promptTokens)', 'promptTokens')
+      .addSelect('ARRAY_AGG(tokenUsage.completionTokens)', 'completionTokens')
+      .addSelect('ARRAY_AGG(tokenUsage.totalTokens)', 'totalTokens')
+      .addSelect('COUNT(*)', 'requestCount')
+      .where('tokenUsage.userId = :userId', { userId });
+
+    if (startDate && endDate) {
+      queryBuilder.andWhere(
+        'tokenUsage.createdAt BETWEEN :startDate AND :endDate',
+        { startDate, endDate },
+      );
+    }
+
+    const result = await queryBuilder
+      .groupBy('tokenUsage.appId')
+      .orderBy('requestCount', 'DESC')
+      .getRawMany();
+
+    const appStats: Array<{
+      appId: string | null;
+      totalCost: number;
+      totalTokens: number;
+      requestCount: number;
+    }> = [];
+    for (const item of result) {
+      let totalCost = 0;
+      let totalTokens = 0;
+      const models = item.models || [];
+      const promptTokensArr = item.prompttokens || [];
+      const completionTokensArr = item.completiontokens || [];
+      const totalTokensArr = item.totaltokens || [];
+
+      for (let i = 0; i < models.length; i++) {
+        const pricing = await this.getModelPricing(models[i]);
+        const pCost = (Number(promptTokensArr[i]) / 1000) * pricing.promptPrice;
+        const cCost =
+          (Number(completionTokensArr[i]) / 1000) * pricing.completionPrice;
+        totalCost += pCost + cCost;
+        totalTokens += Number(totalTokensArr[i]) || 0;
+      }
+
+      appStats.push({
+        appId: item.appId as string | null,
+        totalCost: Number(totalCost.toFixed(6)),
+        totalTokens,
+        requestCount: Number(item.requestcount) || 0,
+      });
+    }
+
+    return appStats;
   }
 }

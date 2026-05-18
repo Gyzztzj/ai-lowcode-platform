@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TokenUsageService } from './token-usage.service';
 import { TokenUsageController } from './token-usage.controller';
-import { TokenUsage } from '../entities';
+import { TokenUsage, Model } from '../entities';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TokenUsage])],
+  imports: [TypeOrmModule.forFeature([TokenUsage, Model])],
   controllers: [TokenUsageController],
   providers: [TokenUsageService],
   exports: [TokenUsageService],

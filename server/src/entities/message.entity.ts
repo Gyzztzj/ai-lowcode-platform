@@ -26,6 +26,18 @@ export class Message {
   @Column({ default: false })
   favorite: boolean;
 
+  @Column({ type: 'int', nullable: true })
+  rating: number | null;
+
+  @Column({ type: 'text', nullable: true })
+  feedback: string | null;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  relevanceScore: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  latencyMs: number | null;
+
   @Column()
   conversationId: string;
 

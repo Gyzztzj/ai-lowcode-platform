@@ -19,6 +19,7 @@ import { TokenUsageService } from '../token-usage/token-usage.service';
 import { AppsService } from '../apps/apps.service';
 import { FlowService } from '../flow/flow.service';
 import { ContextManagerService } from '../context/context-manager.service';
+import { OpenApiService } from './openapi.service';
 import {
   ApiOperation,
   ApiTags,
@@ -38,6 +39,7 @@ export class PublicApiController {
     private readonly appsService: AppsService,
     private readonly flowService: FlowService,
     private readonly contextManagerService: ContextManagerService,
+    private readonly openApiService: OpenApiService,
   ) {}
 
   @ApiOperation({ summary: 'Execute workflow' })
@@ -297,5 +299,129 @@ export class PublicApiController {
       success: true,
       data: logsResult,
     };
+  }
+
+  @ApiOperation({ summary: 'Get OpenAPI specification' })
+  @Get('openapi.json')
+  async getOpenApiSpec(@Req() req) {
+    const spec = await this.openApiService.generateOpenApiSpec(req.apiKey.userId);
+    return spec;
+  }
+
+  @ApiOperation({ summary: 'Get OpenAPI specification for specific app' })
+  @Get('apps/:id/openapi.json')
+  async getAppOpenApiSpec(@Req() req, @Param('id') id: string) {
+    try {
+      const spec = await this.openApiService.generateAppOpenApiSpec(id, req.apiKey.userId);
+      return spec;
+    } catch (error) {
+      return {
+        success: false,
+        error: (error as Error).message,
+      };
+    }
+  }
+
+  @ApiOperation({ summary: 'Execute app directly' })
+  @ApiBody({
+    description: 'App execution request',
+    schema: {
+      type: 'object',
+      properties: {
+        input: { type: 'string' },
+        sessionId: { type: 'string', nullable: true },
+        variables: { type: 'object', nullable: true },
+      },
+      required: ['input'],
+    },
+  })
+  @Post('apps/:id/execute')
+  @HttpCode(HttpStatus.OK)
+  async executeApp(@Req() req, @Param('id') id: string, @Body() body: any) {
+    const startTime = Date.now();
+    const apiKey = req.apiKey;
+
+    try {
+      const { input, sessionId, variables } = body;
+
+      const app = await this.appsService.findOne(id, apiKey.userId);
+      if (!app) {
+        return {
+          success: false,
+          error: 'App not found',
+        };
+      }
+
+      if (!app.nodes || !app.edges) {
+        return {
+          success: false,
+          error: 'App workflow not configured',
+        };
+      }
+
+      let currentSessionId = sessionId;
+      if (!currentSessionId) {
+        const session = await this.contextManagerService.createSession(
+          apiKey.userId,
+          id,
+          { variables: variables || {} },
+        );
+        currentSessionId = session.sessionId;
+      }
+
+      const result = await this.flowService.executeFlow(
+        app.nodes,
+        app.edges,
+        input,
+        id,
+        apiKey.userId,
+        { sessionId: currentSessionId },
+      );
+
+      await this.contextManagerService.saveExecutionContext(
+        currentSessionId,
+        result,
+      );
+
+      await this.auditService.log({
+        userId: apiKey.userId,
+        apiKeyId: apiKey.id,
+        action: 'api.app.execute',
+        resourceType: 'app',
+        resourceId: id,
+        metadata: {
+          sessionId: currentSessionId,
+          durationMs: Date.now() - startTime,
+        },
+        success: true,
+        durationMs: Date.now() - startTime,
+      });
+
+      return {
+        success: true,
+        data: {
+          result: result.result,
+          sessionId: currentSessionId,
+          executionLog: result.executionLog,
+        },
+      };
+    } catch (error) {
+      await this.auditService.log({
+        userId: apiKey.userId,
+        apiKeyId: apiKey.id,
+        action: 'api.app.execute',
+        resourceType: 'app',
+        resourceId: id,
+        metadata: { error: (error as Error).message },
+        success: false,
+        errorMessage: (error as Error).message,
+        durationMs: Date.now() - startTime,
+      });
+
+      return {
+        success: false,
+        error: (error as Error).message,
+      };
+    }
   }
 }

@@ -58,6 +58,9 @@ export class App {
   @Column({ type: 'int', nullable: true })
   monthlyQuota: number | null;
 
+  @Column({ type: 'json', nullable: true })
+  openApiSpec: object | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

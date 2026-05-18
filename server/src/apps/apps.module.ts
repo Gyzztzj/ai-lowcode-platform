@@ -2,7 +2,7 @@
  * 应用模块
  * 包含应用相关的服务、控制器和路由
  */
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppsService } from './apps.service';
 import { AppsController } from './apps.controller';
@@ -21,6 +21,7 @@ import { VariableSetExecutor } from '../executor/variable-set.executor';
 import { ConditionExecutor } from '../executor/condition.executor';
 import { ExpressionEvaluator } from '../utils/expression-evaluator.util';
 import { ContextModule } from '../context/context.module';
+import { PublicApiModule } from '../public-api/public-api.module';
 import { App, Model } from '../entities';
 
 @Module({
@@ -28,8 +29,9 @@ import { App, Model } from '../entities';
     TypeOrmModule.forFeature([App, Model]),
     AiModule,
     KnowledgeModule,
-    AuditModule,
+    forwardRef(() => AuditModule),
     ContextModule,
+    forwardRef(() => PublicApiModule),
   ],
   controllers: [AppsController],
   providers: [
