@@ -527,4 +527,219 @@ export class ConversationsService {
       updatedAt: new Date(),
     });
   }
+
+  async rateMessage(
+    messageId: string,
+    userId: string,
+    rating: number,
+    feedback?: string,
+  ) {
+    const message = await this.messageRepository.findOne({
+      where: { id: messageId },
+      relations: { conversation: true },
+    });
+
+    if (!message) {
+      throw new NotFoundException('消息不存在');
+    }
+
+    if (message.conversation.userId !== userId) {
+      throw new ForbiddenException('你没有权限操作此消息');
+    }
+
+    await this.messageRepository.update(messageId, { rating, feedback });
+    return this.messageRepository.findOne({ where: { id: messageId } });
+  }
+
+  async getConversationStats(userId: string, appId?: string) {
+    const queryBuilder = this.conversationRepository
+      .createQueryBuilder('conversation')
+      .select('conversation.appId', 'appId')
+      .addSelect('COUNT(DISTINCT conversation.id)', 'conversationCount')
+      .addSelect('COUNT(message.id)', 'messageCount')
+      .leftJoin('conversation.messages', 'message')
+      .where('conversation.userId = :userId', { userId });
+
+    if (appId) {
+      queryBuilder.andWhere('conversation.appId = :appId', { appId });
+    }
+
+    const result = await queryBuilder
+      .groupBy('conversation.appId')
+      .getRawMany();
+
+    return result.map((item) => ({
+      appId: item.appId,
+      conversationCount: Number(item.conversationCount) || 0,
+      messageCount: Number(item.messageCount) || 0,
+    }));
+  }
+
+  async getAppConversationStats(
+    appId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ) {
+    const queryBuilder = this.conversationRepository
+      .createQueryBuilder('conversation')
+      .select('DATE(conversation.createdAt)', 'date')
+      .addSelect('COUNT(conversation.id)', 'conversationCount')
+      .addSelect('COUNT(message.id)', 'messageCount')
+      .leftJoin('conversation.messages', 'message')
+      .where('conversation.appId = :appId', { appId });
+
+    if (startDate && endDate) {
+      queryBuilder.andWhere(
+        'conversation.createdAt BETWEEN :startDate AND :endDate',
+        { startDate, endDate },
+      );
+    }
+
+    const result = await queryBuilder
+      .groupBy('DATE(conversation.createdAt)')
+      .orderBy('date', 'ASC')
+      .getRawMany();
+
+    return result.map((item) => ({
+      date: item.date,
+      conversationCount: Number(item.conversationCount) || 0,
+      messageCount: Number(item.messageCount) || 0,
+    }));
+  }
+
+  async getMessageRatingStats(userId: string, appId?: string) {
+    const queryBuilder = this.messageRepository
+      .createQueryBuilder('message')
+      .select('AVG(message.rating)', 'avgRating')
+      .addSelect('COUNT(message.id)', 'ratedCount')
+      .addSelect(
+        'COUNT(CASE WHEN message.rating >= 4 THEN 1 END)',
+        'positiveCount',
+      )
+      .addSelect(
+        'COUNT(CASE WHEN message.rating <= 2 THEN 1 END)',
+        'negativeCount',
+      )
+      .innerJoin('message.conversation', 'conversation')
+      .where('conversation.userId = :userId', { userId })
+      .andWhere('message.rating IS NOT NULL');
+
+    if (appId) {
+      queryBuilder.andWhere('conversation.appId = :appId', { appId });
+    }
+
+    const result = await queryBuilder.getRawOne();
+
+    return {
+      avgRating: Number(result.avgrating) || 0,
+      ratedCount: Number(result.ratedcount) || 0,
+      positiveCount: Number(result.positivecount) || 0,
+      negativeCount: Number(result.negativecount) || 0,
+      positiveRate: result.ratedcount
+        ? Number(
+            (Number(result.positivecount) / Number(result.ratedcount)) * 100,
+          ).toFixed(2)
+        : '0',
+    };
+  }
+
+  async getLatencyStats(userId: string, appId?: string) {
+    const queryBuilder = this.messageRepository
+      .createQueryBuilder('message')
+      .select('AVG(message.latencyMs)', 'avgLatency')
+      .addSelect('MAX(message.latencyMs)', 'maxLatency')
+      .addSelect('MIN(message.latencyMs)', 'minLatency')
+      .addSelect('COUNT(message.id)', 'count')
+      .innerJoin('message.conversation', 'conversation')
+      .where('conversation.userId = :userId', { userId })
+      .andWhere('message.latencyMs IS NOT NULL')
+      .andWhere('message.role = :role', { role: 'assistant' });
+
+    if (appId) {
+      queryBuilder.andWhere('conversation.appId = :appId', { appId });
+    }
+
+    const result = await queryBuilder.getRawOne();
+
+    return {
+      avgLatency: Number(result.avglatency) || 0,
+      maxLatency: Number(result.maxlatency) || 0,
+      minLatency: Number(result.minlatency) || 0,
+      count: Number(result.count) || 0,
+    };
+  }
+
+  async getRelevanceStats(userId: string, appId?: string) {
+    const queryBuilder = this.messageRepository
+      .createQueryBuilder('message')
+      .select('AVG(message.relevanceScore)', 'avgRelevance')
+      .addSelect('COUNT(message.id)', 'count')
+      .innerJoin('message.conversation', 'conversation')
+      .where('conversation.userId = :userId', { userId })
+      .andWhere('message.relevanceScore IS NOT NULL');
+
+    if (appId) {
+      queryBuilder.andWhere('conversation.appId = :appId', { appId });
+    }
+
+    const result = await queryBuilder.getRawOne();
+
+    return {
+      avgRelevance: Number(result.avgrelevance) || 0,
+      count: Number(result.count) || 0,
+    };
+  }
+
+  async getDailyConversationStats(userId: string, days: number = 30) {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const queryBuilder = this.conversationRepository
+      .createQueryBuilder('conversation')
+      .select('DATE(conversation.createdAt)', 'date')
+      .addSelect('COUNT(conversation.id)', 'conversationCount')
+      .where('conversation.userId = :userId', { userId })
+      .andWhere('conversation.createdAt >= :startDate', { startDate });
+
+    const result = await queryBuilder
+      .groupBy('DATE(conversation.createdAt)')
+      .orderBy('date', 'ASC')
+      .getRawMany();
+
+    return result.map((item) => ({
+      date: item.date,
+      conversationCount: Number(item.conversationCount) || 0,
+    }));
+  }
+
+  async getApplicationEffectSummary(userId: string) {
+    const [conversationStats, ratingStats, latencyStats, relevanceStats] =
+      await Promise.all([
+        this.getConversationStats(userId),
+        this.getMessageRatingStats(userId),
+        this.getLatencyStats(userId),
+        this.getRelevanceStats(userId),
+      ]);
+
+    const totalConversations = conversationStats.reduce(
+      (sum, item) => sum + item.conversationCount,
+      0,
+    );
+    const totalMessages = conversationStats.reduce(
+      (sum, item) => sum + item.messageCount,
+      0,
+    );
+
+    return {
+      overview: {
+        totalConversations,
+        totalMessages,
+        appCount: conversationStats.length,
+      },
+      rating: ratingStats,
+      latency: latencyStats,
+      relevance: relevanceStats,
+      apps: conversationStats,
+    };
+  }
 }

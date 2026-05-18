@@ -204,4 +204,79 @@ export class ConversationsController {
   ) {
     return this.conversationsService.update(id, req.user.id, updateData);
   }
+
+  @Patch('messages/:messageId/rate')
+  rateMessage(
+    @Param('messageId') messageId: string,
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { rating: number; feedback?: string },
+  ) {
+    return this.conversationsService.rateMessage(
+      messageId,
+      req.user.id,
+      body.rating,
+      body.feedback,
+    );
+  }
+
+  @Get('stats')
+  getConversationStats(
+    @Request() req: AuthenticatedRequest,
+    @Query('appId') appId?: string,
+  ) {
+    return this.conversationsService.getConversationStats(req.user.id, appId);
+  }
+
+  @Get('stats/app/:appId')
+  getAppConversationStats(
+    @Param('appId') appId: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.conversationsService.getAppConversationStats(
+      appId,
+      startDate ? new Date(startDate) : undefined,
+      endDate ? new Date(endDate) : undefined,
+    );
+  }
+
+  @Get('stats/ratings')
+  getRatingStats(
+    @Request() req: AuthenticatedRequest,
+    @Query('appId') appId?: string,
+  ) {
+    return this.conversationsService.getMessageRatingStats(req.user.id, appId);
+  }
+
+  @Get('stats/latency')
+  getLatencyStats(
+    @Request() req: AuthenticatedRequest,
+    @Query('appId') appId?: string,
+  ) {
+    return this.conversationsService.getLatencyStats(req.user.id, appId);
+  }
+
+  @Get('stats/relevance')
+  getRelevanceStats(
+    @Request() req: AuthenticatedRequest,
+    @Query('appId') appId?: string,
+  ) {
+    return this.conversationsService.getRelevanceStats(req.user.id, appId);
+  }
+
+  @Get('stats/daily')
+  getDailyConversationStats(
+    @Request() req: AuthenticatedRequest,
+    @Query('days') days: string = '30',
+  ) {
+    return this.conversationsService.getDailyConversationStats(
+      req.user.id,
+      parseInt(days, 10),
+    );
+  }
+
+  @Get('stats/summary')
+  getApplicationEffectSummary(@Request() req: AuthenticatedRequest) {
+    return this.conversationsService.getApplicationEffectSummary(req.user.id);
+  }
 }

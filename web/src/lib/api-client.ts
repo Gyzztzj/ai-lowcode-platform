@@ -158,6 +158,171 @@ export const knowledgeApi = {
     api.delete(`/knowledge/documents/${documentId}`),
 };
 
+// ==================== 统计 API ====================
+export interface TokenUsageStats {
+  totalTokens: number;
+  promptTokens: number;
+  completionTokens: number;
+  requestCount: number;
+}
+
+export interface CostStats {
+  totalCost: number;
+  promptCost: number;
+  completionCost: number;
+  totalTokens: number;
+  promptTokens: number;
+  completionTokens: number;
+  requestCount: number;
+}
+
+export interface DailyStats {
+  date: string;
+  totalTokens: number;
+  requestCount: number;
+}
+
+export interface DailyCostStats {
+  date: string;
+  totalCost: number;
+  totalTokens: number;
+  requestCount: number;
+}
+
+export interface MonthlyStats {
+  month: string;
+  totalTokens: number;
+  requestCount: number;
+}
+
+export interface ModelStats {
+  model: string | null;
+  totalTokens: number;
+  requestCount: number;
+}
+
+export interface ModelCostStats {
+  model: string | null;
+  totalCost: number;
+  totalTokens: number;
+  requestCount: number;
+}
+
+export interface ApplicationEffectSummary {
+  overview: {
+    totalConversations: number;
+    totalMessages: number;
+    appCount: number;
+  };
+  rating: {
+    avgRating: number;
+    ratedCount: number;
+    positiveCount: number;
+    negativeCount: number;
+    positiveRate: string;
+  };
+  latency: {
+    avgLatency: number;
+    maxLatency: number;
+    minLatency: number;
+    count: number;
+  };
+  relevance: {
+    avgRelevance: number;
+    count: number;
+  };
+  apps: Array<{
+    appId: string;
+    conversationCount: number;
+    messageCount: number;
+  }>;
+}
+
+export const statsApi = {
+  getTokenStats: (params?: {
+    startDate?: string;
+    endDate?: string;
+  }): Promise<TokenUsageStats> => api.get("/token-usage/stats", { params }),
+
+  getDailyStats: (params?: {
+    days?: string;
+  }): Promise<DailyStats[]> => api.get("/token-usage/daily", { params }),
+
+  getWeeklyStats: (params?: {
+    weeks?: string;
+  }): Promise<{ week: string; totalTokens: number; requestCount: number }[]> =>
+    api.get("/token-usage/weekly", { params }),
+
+  getMonthlyStats: (params?: {
+    months?: string;
+  }): Promise<MonthlyStats[]> => api.get("/token-usage/monthly", { params }),
+
+  getModelsStats: (params?: {
+    startDate?: string;
+    endDate?: string;
+  }): Promise<ModelStats[]> => api.get("/token-usage/models", { params }),
+
+  getCostStats: (params?: {
+    startDate?: string;
+    endDate?: string;
+  }): Promise<CostStats> => api.get("/token-usage/cost", { params }),
+
+  getDailyCostStats: (params?: {
+    days?: string;
+  }): Promise<DailyCostStats[]> => api.get("/token-usage/cost/daily", { params }),
+
+  getMonthlyCostStats: (params?: {
+    months?: string;
+  }): Promise<{ month: string; totalCost: number; totalTokens: number; requestCount: number }[]> =>
+    api.get("/token-usage/cost/monthly", { params }),
+
+  getModelCostStats: (params?: {
+    startDate?: string;
+    endDate?: string;
+  }): Promise<ModelCostStats[]> => api.get("/token-usage/cost/models", { params }),
+
+  getAppCostStats: (params?: {
+    startDate?: string;
+    endDate?: string;
+  }): Promise<{ appId: string | null; totalCost: number; totalTokens: number; requestCount: number }[]> =>
+    api.get("/token-usage/cost/apps", { params }),
+
+  getApplicationEffectSummary: (): Promise<ApplicationEffectSummary> =>
+    api.get("/conversations/stats/summary"),
+
+  getConversationStats: (params?: {
+    appId?: string;
+  }): Promise<{ appId: string; conversationCount: number; messageCount: number }[]> =>
+    api.get("/conversations/stats", { params }),
+
+  getRatingStats: (params?: {
+    appId?: string;
+  }): Promise<{ avgRating: number; ratedCount: number; positiveCount: number; negativeCount: number; positiveRate: string }> =>
+    api.get("/conversations/stats/ratings", { params }),
+
+  getLatencyStats: (params?: {
+    appId?: string;
+  }): Promise<{ avgLatency: number; maxLatency: number; minLatency: number; count: number }> =>
+    api.get("/conversations/stats/latency", { params }),
+
+  getDailyConversationStats: (params?: {
+    days?: string;
+  }): Promise<{ date: string; conversationCount: number }[]> =>
+    api.get("/conversations/stats/daily", { params }),
+
+  getAppConversationStats: (
+    appId: string,
+    params?: {
+      startDate?: string;
+      endDate?: string;
+    },
+  ): Promise<{ date: string; conversationCount: number; messageCount: number }[]> =>
+    api.get(`/conversations/stats/app/${appId}`, { params }),
+
+  rateMessage: (messageId: string, data: { rating: number; feedback?: string }): Promise<{ id: string; rating: number; feedback: string | null }> =>
+    api.patch(`/conversations/messages/${messageId}/rate`, data),
+};
+
 // ==================== API 密钥 API ====================
 export interface ApiKey {
   id: string;

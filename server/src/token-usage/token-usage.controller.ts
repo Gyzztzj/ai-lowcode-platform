@@ -119,4 +119,74 @@ export class TokenUsageController {
       endDate ? new Date(endDate) : undefined,
     );
   }
+
+  @Get('cost')
+  async getCostStats(
+    @Request() req,
+    @Query('apiKeyId') apiKeyId?: string,
+    @Query('appId') appId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.tokenUsageService.getUserCostStats(req.user.id, {
+      apiKeyId,
+      appId,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+    });
+  }
+
+  @Get('cost/daily')
+  async getDailyCostStats(
+    @Request() req,
+    @Query('days') days: string = '30',
+    @Query('apiKeyId') apiKeyId?: string,
+    @Query('appId') appId?: string,
+  ) {
+    return this.tokenUsageService.getDailyCostStats(
+      req.user.id,
+      parseInt(days, 10),
+      { apiKeyId, appId },
+    );
+  }
+
+  @Get('cost/monthly')
+  async getMonthlyCostStats(
+    @Request() req,
+    @Query('months') months: string = '12',
+    @Query('apiKeyId') apiKeyId?: string,
+    @Query('appId') appId?: string,
+  ) {
+    return this.tokenUsageService.getMonthlyCostStats(
+      req.user.id,
+      parseInt(months, 10),
+      { apiKeyId, appId },
+    );
+  }
+
+  @Get('cost/models')
+  async getModelCostStats(
+    @Request() req,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.tokenUsageService.getModelCostStats(
+      req.user.id,
+      startDate ? new Date(startDate) : undefined,
+      endDate ? new Date(endDate) : undefined,
+    );
+  }
+
+  @Get('cost/apps')
+  async getAppCostStats(
+    @Request() req,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.tokenUsageService.getAppCostStats(
+      req.user.id,
+      startDate ? new Date(startDate) : undefined,
+      endDate ? new Date(endDate) : undefined,
+    );
+  }
 }

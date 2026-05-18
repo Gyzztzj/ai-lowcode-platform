@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { FlowEdge, FlowNode, NodeType } from '../flow/flow.types';
 import { App, Model } from '../entities';
 import { FlowService } from '../flow/flow.service';
+import { OpenApiService } from '../public-api/openapi.service';
 
 @Injectable()
 export class AppsService {
@@ -25,6 +26,7 @@ export class AppsService {
     @InjectRepository(Model)
     private modelRepository: Repository<Model>,
     private flowService: FlowService,
+    private openApiService: OpenApiService,
   ) {}
 
   /**
@@ -211,9 +213,15 @@ export class AppsService {
 
     const shareId = uuidv4().slice(0, 8);
 
+    const openApiSpec = await this.openApiService.generateAppOpenApiSpec(
+      id,
+      userId,
+    );
+
     await this.appRepository.update(id, {
       isPublic: true,
       shareId,
+      openApiSpec,
     });
     return this.findOne(id, userId);
   }

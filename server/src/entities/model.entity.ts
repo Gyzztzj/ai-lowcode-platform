@@ -43,6 +43,12 @@ export class Model {
   @Column({ name: 'isSystem', default: false })
   isSystem: boolean;
 
+  @Column({ type: 'decimal', precision: 10, scale: 6, default: 0 })
+  promptTokenPrice: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 6, default: 0 })
+  completionTokenPrice: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

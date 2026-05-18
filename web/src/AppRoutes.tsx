@@ -12,6 +12,7 @@ import KnowledgeDetail from './pages/KnowledgeDetail';
 import ModelManagement from './pages/ModelManagement';
 import RoleManagement from './pages/RoleManagement';
 import QuotaManagement from './pages/QuotaManagement';
+import Statistics from './pages/Statistics';
 
 const AppRoutes = () => {
   return (
@@ -30,6 +31,7 @@ const AppRoutes = () => {
           <Route path="/knowledge/:id" element={<KnowledgeDetail />} />
           <Route path="/roles" element={<RoleManagement />} />
           <Route path="/quota" element={<QuotaManagement />} />
+          <Route path="/statistics" element={<Statistics />} />
         </Route>
       </Route>
       <Route path="/share/:shareId" element={<Share />} />
