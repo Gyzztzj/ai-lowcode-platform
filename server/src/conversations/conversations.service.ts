@@ -528,7 +528,12 @@ export class ConversationsService {
     });
   }
 
-  async rateMessage(messageId: string, userId: string, rating: number, feedback?: string) {
+  async rateMessage(
+    messageId: string,
+    userId: string,
+    rating: number,
+    feedback?: string,
+  ) {
     const message = await this.messageRepository.findOne({
       where: { id: messageId },
       relations: { conversation: true },
@@ -570,7 +575,11 @@ export class ConversationsService {
     }));
   }
 
-  async getAppConversationStats(appId: string, startDate?: Date, endDate?: Date) {
+  async getAppConversationStats(
+    appId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ) {
     const queryBuilder = this.conversationRepository
       .createQueryBuilder('conversation')
       .select('DATE(conversation.createdAt)', 'date')
@@ -603,8 +612,14 @@ export class ConversationsService {
       .createQueryBuilder('message')
       .select('AVG(message.rating)', 'avgRating')
       .addSelect('COUNT(message.id)', 'ratedCount')
-      .addSelect('COUNT(CASE WHEN message.rating >= 4 THEN 1 END)', 'positiveCount')
-      .addSelect('COUNT(CASE WHEN message.rating <= 2 THEN 1 END)', 'negativeCount')
+      .addSelect(
+        'COUNT(CASE WHEN message.rating >= 4 THEN 1 END)',
+        'positiveCount',
+      )
+      .addSelect(
+        'COUNT(CASE WHEN message.rating <= 2 THEN 1 END)',
+        'negativeCount',
+      )
       .innerJoin('message.conversation', 'conversation')
       .where('conversation.userId = :userId', { userId })
       .andWhere('message.rating IS NOT NULL');
@@ -621,7 +636,9 @@ export class ConversationsService {
       positiveCount: Number(result.positivecount) || 0,
       negativeCount: Number(result.negativecount) || 0,
       positiveRate: result.ratedcount
-        ? Number((Number(result.positivecount) / Number(result.ratedcount)) * 100).toFixed(2)
+        ? Number(
+            (Number(result.positivecount) / Number(result.ratedcount)) * 100,
+          ).toFixed(2)
         : '0',
     };
   }
@@ -696,12 +713,13 @@ export class ConversationsService {
   }
 
   async getApplicationEffectSummary(userId: string) {
-    const [conversationStats, ratingStats, latencyStats, relevanceStats] = await Promise.all([
-      this.getConversationStats(userId),
-      this.getMessageRatingStats(userId),
-      this.getLatencyStats(userId),
-      this.getRelevanceStats(userId),
-    ]);
+    const [conversationStats, ratingStats, latencyStats, relevanceStats] =
+      await Promise.all([
+        this.getConversationStats(userId),
+        this.getMessageRatingStats(userId),
+        this.getLatencyStats(userId),
+        this.getRelevanceStats(userId),
+      ]);
 
     const totalConversations = conversationStats.reduce(
       (sum, item) => sum + item.conversationCount,

@@ -213,7 +213,10 @@ export class AppsService {
 
     const shareId = uuidv4().slice(0, 8);
 
-    const openApiSpec = await this.openApiService.generateAppOpenApiSpec(id, userId);
+    const openApiSpec = await this.openApiService.generateAppOpenApiSpec(
+      id,
+      userId,
+    );
 
     await this.appRepository.update(id, {
       isPublic: true,

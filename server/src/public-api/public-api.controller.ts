@@ -304,7 +304,9 @@ export class PublicApiController {
   @ApiOperation({ summary: 'Get OpenAPI specification' })
   @Get('openapi.json')
   async getOpenApiSpec(@Req() req) {
-    const spec = await this.openApiService.generateOpenApiSpec(req.apiKey.userId);
+    const spec = await this.openApiService.generateOpenApiSpec(
+      req.apiKey.userId,
+    );
     return spec;
   }
 
@@ -312,7 +314,10 @@ export class PublicApiController {
   @Get('apps/:id/openapi.json')
   async getAppOpenApiSpec(@Req() req, @Param('id') id: string) {
     try {
-      const spec = await this.openApiService.generateAppOpenApiSpec(id, req.apiKey.userId);
+      const spec = await this.openApiService.generateAppOpenApiSpec(
+        id,
+        req.apiKey.userId,
+      );
       return spec;
     } catch (error) {
       return {

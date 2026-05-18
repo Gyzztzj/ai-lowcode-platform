@@ -15,7 +15,8 @@ export class OpenApiService {
       '/api/v1/apps': {
         get: {
           summary: 'List all apps',
-          description: 'Get a list of all applications accessible by the API key',
+          description:
+            'Get a list of all applications accessible by the API key',
           operationId: 'listApps',
           tags: ['Apps'],
           responses: {
@@ -144,7 +145,10 @@ export class OpenApiService {
                         properties: {
                           result: { type: 'string' },
                           sessionId: { type: 'string' },
-                          executionLog: { type: 'array', items: { type: 'object' } },
+                          executionLog: {
+                            type: 'array',
+                            items: { type: 'object' },
+                          },
                         },
                       },
                     },
@@ -153,7 +157,8 @@ export class OpenApiService {
               },
             },
             '400': {
-              description: 'Bad request - App not found or workflow not configured',
+              description:
+                'Bad request - App not found or workflow not configured',
             },
           },
         },
@@ -390,7 +395,10 @@ export class OpenApiService {
                         properties: {
                           result: { type: 'string' },
                           sessionId: { type: 'string' },
-                          executionLog: { type: 'array', items: { type: 'object' } },
+                          executionLog: {
+                            type: 'array',
+                            items: { type: 'object' },
+                          },
                         },
                       },
                     },
@@ -445,7 +453,8 @@ export class OpenApiService {
       openapi: '3.0.3',
       info: {
         title: `${app.name} API`,
-        description: app.description || `${app.name} application API documentation`,
+        description:
+          app.description || `${app.name} application API documentation`,
         version: '1.0.0',
       },
       servers: [
@@ -490,12 +499,14 @@ export class OpenApiService {
                       sessionId: {
                         type: 'string',
                         nullable: true,
-                        description: 'Optional session ID for stateful execution',
+                        description:
+                          'Optional session ID for stateful execution',
                       },
                       variables: {
                         type: 'object',
                         nullable: true,
-                        description: 'Optional variables to pass to the workflow',
+                        description:
+                          'Optional variables to pass to the workflow',
                       },
                     },
                     required: ['input'],
@@ -517,7 +528,10 @@ export class OpenApiService {
                           properties: {
                             result: { type: 'string' },
                             sessionId: { type: 'string' },
-                            executionLog: { type: 'array', items: { type: 'object' } },
+                            executionLog: {
+                              type: 'array',
+                              items: { type: 'object' },
+                            },
                           },
                         },
                       },
