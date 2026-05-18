@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import {
   BarChart3,
   TrendingUp,
@@ -8,10 +8,10 @@ import {
   Star,
   Zap,
   Activity,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import {
   statsApi,
   type TokenUsageStats,
@@ -19,7 +19,7 @@ import {
   type ApplicationEffectSummary,
   type DailyCostStats,
   type ModelCostStats,
-} from "@/lib/api-client";
+} from '@/lib/api-client';
 
 const StatCard = ({
   icon: Icon,
@@ -43,8 +43,8 @@ const StatCard = ({
           <Icon className="h-6 w-6 text-blue-600" />
         </div>
         {trend && (
-          <Badge variant={trendUp ? "default" : "destructive"} className="text-xs">
-            {trendUp ? "↑" : "↓"} {trend}
+          <Badge variant={trendUp ? 'default' : 'destructive'} className="text-xs">
+            {trendUp ? '↑' : '↓'} {trend}
           </Badge>
         )}
       </div>
@@ -57,13 +57,27 @@ const StatCard = ({
   </Card>
 );
 
-const SimpleChart = ({ data, labelKey, valueKey, color }: { data: any[]; labelKey: string; valueKey: string; color: string }) => {
+interface ChartItem {
+  [key: string]: string | number;
+}
+
+const SimpleChart = ({
+  data,
+  labelKey,
+  valueKey,
+  color,
+}: {
+  data: ChartItem[];
+  labelKey: string;
+  valueKey: string;
+  color: string;
+}) => {
   if (!data || data.length === 0) {
     return <div className="text-center text-gray-500 py-8">暂无数据</div>;
   }
-  
+
   const maxValue = Math.max(...data.map((d) => d[valueKey]), 1);
-  
+
   return (
     <div className="flex items-end justify-between gap-2 h-32">
       {data.slice(-7).map((item, index) => (
@@ -74,7 +88,7 @@ const SimpleChart = ({ data, labelKey, valueKey, color }: { data: any[]; labelKe
               style={{
                 backgroundColor: color,
                 height: `${(item[valueKey] / maxValue) * 100}%`,
-                minHeight: item[valueKey] > 0 ? "4px" : "0",
+                minHeight: item[valueKey] > 0 ? '4px' : '0',
               }}
             />
           </div>
@@ -103,7 +117,7 @@ export default function Statistics() {
           statsApi.getTokenStats(),
           statsApi.getCostStats(),
           statsApi.getApplicationEffectSummary(),
-          statsApi.getDailyCostStats({ days: "14" }),
+          statsApi.getDailyCostStats({ days: '14' }),
           statsApi.getModelCostStats(),
         ]);
         setTokenStats(token);
@@ -112,7 +126,7 @@ export default function Statistics() {
         setDailyCostStats(dailyCost);
         setModelCostStats(modelCost);
       } catch (error) {
-        console.error("Failed to fetch stats:", error);
+        console.error('Failed to fetch stats:', error);
       } finally {
         setLoading(false);
       }
@@ -166,8 +180,8 @@ export default function Statistics() {
             <StatCard
               icon={DollarSign}
               label="累计花费"
-              value={`$${costStats?.totalCost.toFixed(4) || "0.00"}`}
-              subValue={`本月: $${costStats?.totalCost.toFixed(4) || "0.00"}`}
+              value={`$${costStats?.totalCost.toFixed(4) || '0.00'}`}
+              subValue={`本月: $${costStats?.totalCost.toFixed(4) || '0.00'}`}
               trend="5%"
               trendUp={false}
             />
@@ -228,17 +242,11 @@ export default function Statistics() {
               <div className="space-y-4">
                 {modelCostStats.slice(0, 5).map((item, index) => (
                   <div key={index} className="flex items-center gap-4">
-                    <span className="w-8 text-sm font-medium text-gray-500">
-                      #{index + 1}
-                    </span>
+                    <span className="w-8 text-sm font-medium text-gray-500">#{index + 1}</span>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium">
-                          {item.model || "未知模型"}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          ${item.totalCost.toFixed(4)}
-                        </span>
+                        <span className="font-medium">{item.model || '未知模型'}</span>
+                        <span className="text-sm text-gray-500">${item.totalCost.toFixed(4)}</span>
                       </div>
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div
@@ -261,25 +269,25 @@ export default function Statistics() {
             <StatCard
               icon={DollarSign}
               label="总花费"
-              value={`$${costStats?.totalCost.toFixed(4) || "0.00"}`}
+              value={`$${costStats?.totalCost.toFixed(4) || '0.00'}`}
               subValue="累计支出"
             />
             <StatCard
               icon={BarChart3}
               label="Prompt花费"
-              value={`$${costStats?.promptCost.toFixed(4) || "0.00"}`}
+              value={`$${costStats?.promptCost.toFixed(4) || '0.00'}`}
               subValue={`${costStats ? ((costStats.promptCost / costStats.totalCost) * 100).toFixed(1) : 0}% 占比`}
             />
             <StatCard
               icon={MessageSquare}
               label="Completion花费"
-              value={`$${costStats?.completionCost.toFixed(4) || "0.00"}`}
+              value={`$${costStats?.completionCost.toFixed(4) || '0.00'}`}
               subValue={`${costStats ? ((costStats.completionCost / costStats.totalCost) * 100).toFixed(1) : 0}% 占比`}
             />
             <StatCard
               icon={Activity}
               label="每千令牌成本"
-              value={`$${costStats ? (costStats.totalCost / (costStats.totalTokens / 1000)).toFixed(4) : "0.00"}`}
+              value={`$${costStats ? (costStats.totalCost / (costStats.totalTokens / 1000)).toFixed(4) : '0.00'}`}
               subValue="平均单价"
             />
           </div>
@@ -296,9 +304,7 @@ export default function Statistics() {
                 <div className="space-y-3">
                   {dailyCostStats.map((item) => (
                     <div key={item.date} className="flex items-center gap-3">
-                      <span className="w-16 text-sm text-gray-500">
-                        {item.date.slice(5)}
-                      </span>
+                      <span className="w-16 text-sm text-gray-500">{item.date.slice(5)}</span>
                       <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-end pr-2"
@@ -329,9 +335,11 @@ export default function Statistics() {
               <CardContent>
                 <div className="space-y-4">
                   {modelCostStats.map((item) => (
-                    <div key={item.model || "unknown"} className="flex items-center gap-4">
+                    <div key={item.model || 'unknown'} className="flex items-center gap-4">
                       <div className="w-16 text-sm">
-                        {item.model?.length > 12 ? item.model.slice(0, 12) + "..." : item.model || "未知"}
+                        {item.model?.length > 12
+                          ? item.model.slice(0, 12) + '...'
+                          : item.model || '未知'}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
@@ -368,7 +376,7 @@ export default function Statistics() {
             <StatCard
               icon={Star}
               label="平均评分"
-              value={effectSummary?.rating.avgRating.toFixed(2) || "0.00"}
+              value={effectSummary?.rating.avgRating.toFixed(2) || '0.00'}
               subValue={`${effectSummary?.rating.ratedCount || 0} 次评价`}
             />
             <StatCard
@@ -406,7 +414,9 @@ export default function Statistics() {
                   </div>
                   <div className="text-center">
                     <div className="text-4xl font-bold text-yellow-600">
-                      {effectSummary?.rating.ratedCount - (effectSummary?.rating.positiveCount || 0) - (effectSummary?.rating.negativeCount || 0) || 0}
+                      {effectSummary?.rating.ratedCount -
+                        (effectSummary?.rating.positiveCount || 0) -
+                        (effectSummary?.rating.negativeCount || 0) || 0}
                     </div>
                     <div className="text-sm text-gray-500 mt-1">中评</div>
                   </div>
