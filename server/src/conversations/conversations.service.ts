@@ -14,7 +14,6 @@ import { SendMessageDto } from './dto/send-message.dto';
 import { Readable } from 'stream';
 import { MessageRole } from '../entities';
 import { FlowService } from '../flow/flow.service';
-import { FlowEdge, FlowNode } from '../flow/flow.types';
 import { Conversation, Message, App } from '../entities';
 import {
   PaginationQueryDto,
@@ -361,7 +360,7 @@ export class ConversationsService {
           // 添加小延迟让它看起来像流式
           await new Promise((resolve) => setTimeout(resolve, 10));
         }
-      } catch (error) {
+      } catch {
         fullContent = '抱歉，执行出错了，请稍后重试。';
         transformStream.push(
           `data: ${JSON.stringify({ content: fullContent })}\n\n`,
@@ -413,13 +412,14 @@ export class ConversationsService {
           }
         });
 
-        stream.on('end', async () => {
-          try {
-            await this.saveAssistantMessage(id, fullContent);
-            await this.touchConversation(id);
-          } catch (error) {}
-          transformStream.push(null);
-          resolve();
+        stream.on('end', () => {
+          this.saveAssistantMessage(id, fullContent)
+            .then(() => this.touchConversation(id))
+            .catch(() => {})
+            .finally(() => {
+              transformStream.push(null);
+              resolve();
+            });
         });
 
         stream.on('error', (error) => {
