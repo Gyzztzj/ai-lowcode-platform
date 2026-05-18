@@ -57,17 +57,13 @@ const StatCard = ({
   </Card>
 );
 
-interface ChartItem {
-  [key: string]: string | number;
-}
-
 const SimpleChart = ({
   data,
   labelKey,
   valueKey,
   color,
 }: {
-  data: ChartItem[];
+  data: unknown[];
   labelKey: string;
   valueKey: string;
   color: string;
@@ -76,27 +72,34 @@ const SimpleChart = ({
     return <div className="text-center text-gray-500 py-8">暂无数据</div>;
   }
 
-  const maxValue = Math.max(...data.map((d) => d[valueKey]), 1);
+  const maxValue = Math.max(
+    ...data.map((d) => Number((d as Record<string, unknown>)[valueKey]) || 0),
+    1,
+  );
 
   return (
     <div className="flex items-end justify-between gap-2 h-32">
-      {data.slice(-7).map((item, index) => (
-        <div key={index} className="flex-1 flex flex-col items-center gap-1">
-          <div className="w-full flex flex-col items-center justify-end h-24">
-            <div
-              className="w-full rounded-t-md transition-all duration-300 hover:opacity-80"
-              style={{
-                backgroundColor: color,
-                height: `${(item[valueKey] / maxValue) * 100}%`,
-                minHeight: item[valueKey] > 0 ? '4px' : '0',
-              }}
-            />
+      {data.slice(-7).map((item, index) => {
+        const record = item as Record<string, unknown>;
+        const value = Number(record[valueKey]) || 0;
+        return (
+          <div key={index} className="flex-1 flex flex-col items-center gap-1">
+            <div className="w-full flex flex-col items-center justify-end h-24">
+              <div
+                className="w-full rounded-t-md transition-all duration-300 hover:opacity-80"
+                style={{
+                  backgroundColor: color,
+                  height: `${(value / maxValue) * 100}%`,
+                  minHeight: value > 0 ? '4px' : '0',
+                }}
+              />
+            </div>
+            <span className="text-xs text-gray-500 truncate w-full text-center">
+              {String(record[labelKey])}
+            </span>
           </div>
-          <span className="text-xs text-gray-500 truncate w-full text-center">
-            {item[labelKey]}
-          </span>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
@@ -337,7 +340,7 @@ export default function Statistics() {
                   {modelCostStats.map((item) => (
                     <div key={item.model || 'unknown'} className="flex items-center gap-4">
                       <div className="w-16 text-sm">
-                        {item.model?.length > 12
+                        {item.model && item.model.length > 12
                           ? item.model.slice(0, 12) + '...'
                           : item.model || '未知'}
                       </div>
@@ -414,7 +417,7 @@ export default function Statistics() {
                   </div>
                   <div className="text-center">
                     <div className="text-4xl font-bold text-yellow-600">
-                      {effectSummary?.rating.ratedCount -
+                      {(effectSummary?.rating.ratedCount || 0) -
                         (effectSummary?.rating.positiveCount || 0) -
                         (effectSummary?.rating.negativeCount || 0) || 0}
                     </div>
