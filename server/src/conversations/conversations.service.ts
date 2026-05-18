@@ -368,15 +368,11 @@ export class ConversationsService {
         );
       }
 
+      await this.saveAssistantMessage(id, fullContent);
+      await this.touchConversation(id);
+
       transformStream.push(`data: [DONE]\n\n`);
       transformStream.push(null);
-
-      void (async () => {
-        try {
-          await this.saveAssistantMessage(id, fullContent);
-          await this.touchConversation(id);
-        } catch (error) {}
-      })();
     } else {
       const messages = this.buildMessages(
         app.systemPrompt,
@@ -390,44 +386,46 @@ export class ConversationsService {
         model: app.defaultModel,
       });
 
-      stream.on('data', (chunk: Buffer) => {
-        transformStream.push(chunk);
+      await new Promise<void>((resolve, reject) => {
+        stream.on('data', (chunk: Buffer) => {
+          transformStream.push(chunk);
 
-        const dataStr = chunk.toString();
-        const lines = dataStr.split('\n');
+          const dataStr = chunk.toString();
+          const lines = dataStr.split('\n');
 
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (!trimmedLine) continue;
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) continue;
 
-          if (trimmedLine.startsWith('data: ')) {
-            const data = trimmedLine.slice(6);
-            if (data !== '[DONE]') {
-              try {
-                const parsed = JSON.parse(data) as { content?: string };
-                if (parsed.content) {
-                  fullContent += parsed.content;
+            if (trimmedLine.startsWith('data: ')) {
+              const data = trimmedLine.slice(6);
+              if (data !== '[DONE]') {
+                try {
+                  const parsed = JSON.parse(data) as { content?: string };
+                  if (parsed.content) {
+                    fullContent += parsed.content;
+                  }
+                } catch {
+                  // 忽略解析失败的非标准片段，继续消费流
                 }
-              } catch {
-                // 忽略解析失败的非标准片段，继续消费流
               }
             }
           }
-        }
-      });
+        });
 
-      stream.on('end', () => {
-        transformStream.push(null);
-        void (async () => {
+        stream.on('end', async () => {
           try {
             await this.saveAssistantMessage(id, fullContent);
             await this.touchConversation(id);
           } catch (error) {}
-        })();
-      });
+          transformStream.push(null);
+          resolve();
+        });
 
-      stream.on('error', (error) => {
-        transformStream.push(null);
+        stream.on('error', (error) => {
+          transformStream.push(null);
+          reject(error);
+        });
       });
     }
 

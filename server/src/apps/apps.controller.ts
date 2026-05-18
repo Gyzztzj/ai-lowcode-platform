@@ -218,45 +218,26 @@ export class AppsController {
       throw new BadRequestException('应用未配置流程');
     }
 
-    // 设置 SSE 响应头
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('X-Accel-Buffering', 'no');
 
-    const transformStream = new Readable({
-      read() {},
-    });
-
-    let fullContent = '';
-
     try {
-      const result = await this.flowService.executeFlow(
+      const stream = await this.flowService.executeFlowStream(
         app.nodes,
         app.edges,
         body.userInput,
         app.id,
-        null, // 匿名用户
+        null,
       );
-
-      fullContent = result.result;
-
-      // 流式返回最终内容
-      for (let i = 0; i < fullContent.length; i++) {
-        const char = fullContent[i];
-        transformStream.push(`data: ${JSON.stringify({ content: char })}\n\n`);
-        await new Promise((resolve) => setTimeout(resolve, 10));
-      }
+      stream.pipe(res);
     } catch (error) {
-      fullContent = '抱歉，执行出错了，请稍后重试。';
-      transformStream.push(
-        `data: ${JSON.stringify({ content: fullContent })}\n\n`,
+      res.write(
+        `data: ${JSON.stringify({ content: '抱歉，执行出错了，请稍后重试。' })}\n\n`,
       );
+      res.write('data: [DONE]\n\n');
+      res.end();
     }
-
-    transformStream.push(`data: [DONE]\n\n`);
-    transformStream.push(null);
-
-    transformStream.pipe(res);
   }
 }

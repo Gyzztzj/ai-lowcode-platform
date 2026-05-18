@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { App } from '@/types';
 import { useAppStore } from '@/store/appStore';
 import {
@@ -21,7 +21,12 @@ interface AppCardProps {
 const AppCard = ({ app }: AppCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const { deleteApp } = useAppStore();
+  const { deleteApp, models } = useAppStore();
+
+  const modelName = useMemo(() => {
+    const model = models.find((m) => m.id === app.defaultModel);
+    return model?.name || app.defaultModel;
+  }, [models, app.defaultModel]);
 
   const handleDelete = () => {
     setDeleteConfirmOpen(true);
@@ -42,7 +47,7 @@ const AppCard = ({ app }: AppCardProps) => {
         </CardHeader>
         <CardContent>
           <div className="text-sm text-gray-500 space-y-1">
-            <p>默认模型: {app.defaultModel}</p>
+            <p>默认模型: {modelName}</p>
             <p className="line-clamp-2">系统提示: {app.systemPrompt}</p>
           </div>
         </CardContent>
