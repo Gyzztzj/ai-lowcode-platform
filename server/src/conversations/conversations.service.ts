@@ -14,7 +14,6 @@ import { SendMessageDto } from './dto/send-message.dto';
 import { Readable } from 'stream';
 import { MessageRole } from '../entities';
 import { FlowService } from '../flow/flow.service';
-import { FlowEdge, FlowNode } from '../flow/flow.types';
 import { Conversation, Message, App } from '../entities';
 import {
   PaginationQueryDto,
@@ -361,22 +360,18 @@ export class ConversationsService {
           // 添加小延迟让它看起来像流式
           await new Promise((resolve) => setTimeout(resolve, 10));
         }
-      } catch (error) {
+      } catch {
         fullContent = '抱歉，执行出错了，请稍后重试。';
         transformStream.push(
           `data: ${JSON.stringify({ content: fullContent })}\n\n`,
         );
       }
 
+      await this.saveAssistantMessage(id, fullContent);
+      await this.touchConversation(id);
+
       transformStream.push(`data: [DONE]\n\n`);
       transformStream.push(null);
-
-      void (async () => {
-        try {
-          await this.saveAssistantMessage(id, fullContent);
-          await this.touchConversation(id);
-        } catch (error) {}
-      })();
     } else {
       const messages = this.buildMessages(
         app.systemPrompt,
@@ -390,44 +385,47 @@ export class ConversationsService {
         model: app.defaultModel,
       });
 
-      stream.on('data', (chunk: Buffer) => {
-        transformStream.push(chunk);
+      await new Promise<void>((resolve, reject) => {
+        stream.on('data', (chunk: Buffer) => {
+          transformStream.push(chunk);
 
-        const dataStr = chunk.toString();
-        const lines = dataStr.split('\n');
+          const dataStr = chunk.toString();
+          const lines = dataStr.split('\n');
 
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (!trimmedLine) continue;
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) continue;
 
-          if (trimmedLine.startsWith('data: ')) {
-            const data = trimmedLine.slice(6);
-            if (data !== '[DONE]') {
-              try {
-                const parsed = JSON.parse(data) as { content?: string };
-                if (parsed.content) {
-                  fullContent += parsed.content;
+            if (trimmedLine.startsWith('data: ')) {
+              const data = trimmedLine.slice(6);
+              if (data !== '[DONE]') {
+                try {
+                  const parsed = JSON.parse(data) as { content?: string };
+                  if (parsed.content) {
+                    fullContent += parsed.content;
+                  }
+                } catch {
+                  // 忽略解析失败的非标准片段，继续消费流
                 }
-              } catch {
-                // 忽略解析失败的非标准片段，继续消费流
               }
             }
           }
-        }
-      });
+        });
 
-      stream.on('end', () => {
-        transformStream.push(null);
-        void (async () => {
-          try {
-            await this.saveAssistantMessage(id, fullContent);
-            await this.touchConversation(id);
-          } catch (error) {}
-        })();
-      });
+        stream.on('end', () => {
+          this.saveAssistantMessage(id, fullContent)
+            .then(() => this.touchConversation(id))
+            .catch(() => {})
+            .finally(() => {
+              transformStream.push(null);
+              resolve();
+            });
+        });
 
-      stream.on('error', (error) => {
-        transformStream.push(null);
+        stream.on('error', (error) => {
+          transformStream.push(null);
+          reject(error);
+        });
       });
     }
 

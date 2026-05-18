@@ -594,7 +594,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       app.embeddingModel =
         app.embeddingModel === null ? "none" : app.embeddingModel;
     }
-    set({ currentApp: app });
+    set((state) => ({
+      currentApp: app,
+      apps: state.apps.map((a) => (a.id === id ? app : a)),
+    }));
   },
 
   deleteMessage: async (messageId) => {

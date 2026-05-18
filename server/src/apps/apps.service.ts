@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { CreateAppDto } from './dto/create-app.dto';
 import { UpdateAppDto } from './dto/update-app.dto';
 import { ValidateFlowDto } from './dto/validate-flow.dto';
@@ -27,6 +28,7 @@ export class AppsService {
     private modelRepository: Repository<Model>,
     private flowService: FlowService,
     private openApiService: OpenApiService,
+    private dataSource: DataSource,
   ) {}
 
   /**
@@ -136,22 +138,17 @@ export class AppsService {
    */
   async update(id: string, userId: string, updateAppDto: UpdateAppDto) {
     const app = await this.findOne(id, userId);
-
-    if (app.userId !== userId) {
-      throw new ForbiddenException('你没有权限编辑此应用');
-    }
-
     await this.validateModels(updateAppDto);
-    // 将 "none" 转换为 null
-    const dto = {
+
+    const updateData = {
       ...updateAppDto,
       embeddingModel:
         updateAppDto.embeddingModel === 'none'
           ? null
           : updateAppDto.embeddingModel,
     };
-    await this.appRepository.update(id, dto);
-    return this.findOne(id, userId);
+    Object.assign(app, updateData);
+    return this.appRepository.save(app);
   }
 
   /**
@@ -162,11 +159,6 @@ export class AppsService {
    */
   async remove(id: string, userId: string) {
     const app = await this.findOne(id, userId);
-
-    if (app.userId !== userId) {
-      throw new ForbiddenException('你没有权限删除此应用');
-    }
-
     await this.appRepository.softDelete(id);
     return app;
   }
@@ -185,17 +177,56 @@ export class AppsService {
     nodes: FlowNode[],
     edges: FlowEdge[],
   ) {
-    const app = await this.findOne(id, userId);
+    return this.dataSource.transaction(async (manager) => {
+      const app = await manager.findOne(App, { where: { id } });
 
-    if (app.userId !== userId) {
-      throw new ForbiddenException('你没有权限编辑此应用');
-    }
+      if (!app) {
+        throw new NotFoundException('应用不存在');
+      }
 
-    await this.appRepository.update(id, {
-      nodes,
-      edges,
+      if (app.userId !== userId && !app.isPublic) {
+        throw new ForbiddenException('你没有权限访问此应用');
+      }
+
+      if (app.userId !== userId) {
+        throw new ForbiddenException('你没有权限编辑此应用');
+      }
+
+      let systemPrompt = app.systemPrompt;
+      let defaultModel = app.defaultModel;
+      let systemPromptSet = false;
+      let defaultModelSet = false;
+
+      for (const node of nodes) {
+        if (
+          (node.type === NodeType.SYSTEM_PROMPT ||
+            node.type === NodeType.SYSTEMPROMPT) &&
+          !systemPromptSet
+        ) {
+          systemPrompt = node.data?.content || systemPrompt;
+          systemPromptSet = true;
+        }
+        if (node.type === NodeType.LLM) {
+          if (!defaultModelSet) {
+            defaultModel = node.data?.model || defaultModel;
+            defaultModelSet = true;
+          }
+          if (!systemPromptSet && node.data?.systemPrompt) {
+            systemPrompt = node.data.systemPrompt;
+            systemPromptSet = true;
+          }
+        }
+      }
+
+      await manager.update(App, id, {
+        nodes,
+        edges,
+        systemPrompt,
+        defaultModel,
+      });
+
+      return manager.findOne(App, { where: { id } });
     });
-    return this.findOne(id, userId);
   }
 
   /**
@@ -205,25 +236,36 @@ export class AppsService {
    * @returns 发布后的应用
    */
   async publish(id: string, userId: string) {
-    const app = await this.findOne(id, userId);
+    return this.dataSource.transaction(async (manager) => {
+      const app = await manager.findOne(App, { where: { id } });
 
-    if (app.userId !== userId) {
-      throw new ForbiddenException('你没有权限发布此应用');
-    }
+      if (!app) {
+        throw new NotFoundException('应用不存在');
+      }
 
-    const shareId = uuidv4().slice(0, 8);
+      if (app.userId !== userId && !app.isPublic) {
+        throw new ForbiddenException('你没有权限访问此应用');
+      }
 
-    const openApiSpec = await this.openApiService.generateAppOpenApiSpec(
-      id,
-      userId,
-    );
+      if (app.userId !== userId) {
+        throw new ForbiddenException('你没有权限发布此应用');
+      }
 
-    await this.appRepository.update(id, {
-      isPublic: true,
-      shareId,
-      openApiSpec,
+      const shareId = uuidv4().slice(0, 8);
+
+      const openApiSpec = await this.openApiService.generateAppOpenApiSpec(
+        id,
+        userId,
+      );
+
+      await manager.update(App, id, {
+        isPublic: true,
+        shareId,
+        openApiSpec,
+      });
+
+      return manager.findOne(App, { where: { id } });
     });
-    return this.findOne(id, userId);
   }
 
   /**
@@ -253,9 +295,7 @@ export class AppsService {
     const errors: string[] = [];
 
     // 检查开始节点
-    const startNodes = nodes.filter(
-      (node) => node.type === NodeType.START || node.type === 'start',
-    );
+    const startNodes = nodes.filter((node) => node.type === NodeType.START);
     if (startNodes.length === 0) {
       errors.push('缺少开始节点');
     } else if (startNodes.length > 1) {
@@ -263,9 +303,7 @@ export class AppsService {
     }
 
     // 检查结束节点
-    const endNodes = nodes.filter(
-      (node) => node.type === NodeType.END || node.type === 'end',
-    );
+    const endNodes = nodes.filter((node) => node.type === NodeType.END);
     if (endNodes.length === 0) {
       errors.push('缺少结束节点');
     } else if (endNodes.length > 1) {

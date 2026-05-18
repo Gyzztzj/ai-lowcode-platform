@@ -2,7 +2,7 @@
  * 流程服务
  */
 import { Injectable } from '@nestjs/common';
-import { FlowNode, FlowEdge, ExecutionContext } from './flow.types';
+import { FlowNode, FlowEdge, ExecutionContext, NodeType } from './flow.types';
 import { ExecutorFactory } from '../factory/executor.factory';
 import { AuditService } from '../audit/audit.service';
 
@@ -121,7 +121,7 @@ export class FlowService {
     let currentNodeId = startNodeId;
 
     if (!currentNodeId) {
-      const startNode = nodes.find((n) => n.type === 'start');
+      const startNode = nodes.find((n) => n.type === NodeType.START);
       if (startNode) {
         currentNodeId = startNode.id;
       }
@@ -157,7 +157,7 @@ export class FlowService {
         });
       }
 
-      if (node.type === 'end') {
+      if (node.type === NodeType.END) {
         break;
       }
 
@@ -364,6 +364,72 @@ export class FlowService {
   }
 
   /**
+   * 执行流程（流式）
+   * @param nodes 流程节点
+   * @param edges 流程边
+   * @param userInput 用户输入
+   * @param appId 应用ID
+   * @param userId 用户ID
+   * @returns 流式响应
+   */
+  async executeFlowStream(
+    nodes: FlowNode[],
+    edges: FlowEdge[],
+    userInput: string,
+    appId: string,
+    userId: string | null,
+  ): Promise<NodeJS.ReadableStream> {
+    const { Readable } = await import('stream');
+
+    const startNode = nodes.find((n) => n.type === NodeType.START);
+    if (!startNode) {
+      const errorStream = new Readable({ read() {} });
+      errorStream.push(
+        `data: ${JSON.stringify({ error: '缺少开始节点' })}\n\n`,
+      );
+      errorStream.push('data: [DONE]\n\n');
+      errorStream.push(null);
+      return errorStream;
+    }
+
+    const llmNode = nodes.find((n) => n.type === NodeType.LLM);
+    if (!llmNode) {
+      const errorStream = new Readable({ read() {} });
+      errorStream.push(`data: ${JSON.stringify({ error: '缺少LLM节点' })}\n\n`);
+      errorStream.push('data: [DONE]\n\n');
+      errorStream.push(null);
+      return errorStream;
+    }
+
+    const context: ExecutionContext = {
+      appId,
+      userId,
+      userInput,
+      variables: {},
+      systemPrompt: '',
+      messages: [],
+      result: '',
+      nodeOutputs: {},
+      metadata: {
+        startTime: Date.now(),
+      },
+      executionLog: [],
+    };
+
+    const systemPromptNode = nodes.find(
+      (n) =>
+        n.type === NodeType.SYSTEM_PROMPT || n.type === NodeType.SYSTEMPROMPT,
+    );
+    if (systemPromptNode) {
+      context.systemPrompt = systemPromptNode.data?.content || '';
+    }
+
+    const llmExecutor = ExecutorFactory.getExecutor('llm');
+
+    return (llmExecutor as any).executeStream(llmNode, context);
+  }
+
+  /**
    * 验证流程
    * @param nodes 流程节点
    * @param edges 流程边
@@ -376,12 +442,12 @@ export class FlowService {
     const errors: string[] = [];
     const nodeIds = new Set(nodes.map((n) => n.id));
 
-    const hasStart = nodes.some((n) => n.type === 'start');
+    const hasStart = nodes.some((n) => n.type === NodeType.START);
     if (!hasStart) {
       errors.push('工作流缺少开始节点');
     }
 
-    const hasEnd = nodes.some((n) => n.type === 'end');
+    const hasEnd = nodes.some((n) => n.type === NodeType.END);
     if (!hasEnd) {
       errors.push('工作流缺少结束节点');
     }
