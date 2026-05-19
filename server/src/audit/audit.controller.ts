@@ -28,12 +28,10 @@ export class AuditController {
   @ApiQuery({ name: 'endDate', required: false, type: String })
   @ApiQuery({ name: 'action', required: false, type: String })
   @ApiQuery({ name: 'success', required: false, type: Boolean })
-  @ApiQuery({ name: 'sessionId', required: false, type: String })
-  @ApiQuery({ name: 'requestId', required: false, type: String })
-  @ApiQuery({ name: 'clientId', required: false, type: String })
   @Get('my-logs')
   async getMyLogs(@Req() req, @Query() query: any) {
-    const { logs, total } = await this.auditService.findByUser(req.user.id, {
+    const { logs, total } = await this.auditService.find({
+      userId: req.user.id,
       limit: query.limit ? parseInt(query.limit, 10) : 100,
       offset: query.offset ? parseInt(query.offset, 10) : 0,
       startDate: query.startDate ? new Date(query.startDate) : undefined,
@@ -41,9 +39,6 @@ export class AuditController {
       action: query.action,
       success:
         query.success !== undefined ? query.success === 'true' : undefined,
-      sessionId: query.sessionId,
-      requestId: query.requestId,
-      clientId: query.clientId,
     });
 
     return {
@@ -61,13 +56,10 @@ export class AuditController {
   @ApiQuery({ name: 'action', required: false, type: String })
   @ApiQuery({ name: 'resourceType', required: false, type: String })
   @ApiQuery({ name: 'success', required: false, type: Boolean })
-  @ApiQuery({ name: 'sessionId', required: false, type: String })
-  @ApiQuery({ name: 'requestId', required: false, type: String })
-  @ApiQuery({ name: 'clientId', required: false, type: String })
   @Get('logs')
   @RequirePermissions(Permission.READ_AUDIT)
   async getAllLogs(@Query() query: any) {
-    const { logs, total } = await this.auditService.findAll({
+    const { logs, total } = await this.auditService.find({
       limit: query.limit ? parseInt(query.limit, 10) : 100,
       offset: query.offset ? parseInt(query.offset, 10) : 0,
       startDate: query.startDate ? new Date(query.startDate) : undefined,
@@ -77,9 +69,6 @@ export class AuditController {
       resourceType: query.resourceType,
       success:
         query.success !== undefined ? query.success === 'true' : undefined,
-      sessionId: query.sessionId,
-      requestId: query.requestId,
-      clientId: query.clientId,
     });
 
     return {
@@ -113,7 +102,7 @@ export class AuditController {
   @Get('export')
   @RequirePermissions(Permission.READ_AUDIT)
   async exportLogs(@Query() query: any, @Res() res: Response) {
-    const logs = await this.auditService.exportLogs({
+    const { logs } = await this.auditService.find({
       startDate: query.startDate ? new Date(query.startDate) : undefined,
       endDate: query.endDate ? new Date(query.endDate) : undefined,
       userId: query.userId,
@@ -136,14 +125,12 @@ export class AuditController {
   @Get('resource-logs')
   @RequirePermissions(Permission.READ_AUDIT)
   async getResourceLogs(@Query() query: any) {
-    const { logs, total } = await this.auditService.findByResource(
-      query.resourceType,
-      query.resourceId,
-      {
-        limit: query.limit ? parseInt(query.limit, 10) : 100,
-        offset: query.offset ? parseInt(query.offset, 10) : 0,
-      },
-    );
+    const { logs, total } = await this.auditService.find({
+      resourceType: query.resourceType,
+      resourceId: query.resourceId,
+      limit: query.limit ? parseInt(query.limit, 10) : 100,
+      offset: query.offset ? parseInt(query.offset, 10) : 0,
+    });
 
     return {
       success: true,
