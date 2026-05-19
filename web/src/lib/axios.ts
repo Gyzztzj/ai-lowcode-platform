@@ -144,14 +144,19 @@ api.interceptors.response.use(
         // 通知等待的请求刷新失败
         onTokenRefreshed('');
 
-        // 如果不是登录页面，才显示错误并跳转
-        if (!window.location.pathname.includes('/login')) {
+        // 如果不是登录页面、重置密码页面或找回密码页面，才显示错误并跳转
+        const currentPath = window.location.pathname;
+        if (
+          !currentPath.includes('/login') &&
+          !currentPath.includes('/reset-password') &&
+          !currentPath.includes('/forgot-password')
+        ) {
           toast.error('登录已过期，请重新登录', {
             description: '请重新登录',
           });
 
           // 使用 replace 避免重复历史记录
-          if (window.location.pathname !== '/login') {
+          if (currentPath !== '/login') {
             window.location.replace('/login');
           }
         }
@@ -168,7 +173,12 @@ api.interceptors.response.use(
       const userStore = useUserStore.getState();
       userStore.logout();
 
-      if (!window.location.pathname.includes('/login')) {
+      const currentPath = window.location.pathname;
+      if (
+        !currentPath.includes('/login') &&
+        !currentPath.includes('/reset-password') &&
+        !currentPath.includes('/forgot-password')
+      ) {
         window.location.replace('/login');
       }
     }

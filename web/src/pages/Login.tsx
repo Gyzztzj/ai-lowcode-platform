@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Controller, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useAuth } from "@/hooks/useApi";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useAuth } from '@/hooks/useApi';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
@@ -13,19 +13,14 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import { Alert } from "@/components/ui/alert";
-import { toast } from "sonner";
+} from '@/components/ui/card';
+import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Alert } from '@/components/ui/alert';
+import { toast } from 'sonner';
 
 const loginSchema = z.object({
-  email: z.string().email("请输入有效的邮箱地址"),
-  password: z.string().min(6, "密码至少6个字符"),
+  email: z.string().email('请输入有效的邮箱地址'),
+  password: z.string().min(6, '密码至少6个字符'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -37,13 +32,13 @@ const Login = () => {
   const { login, isLoginPending } = useAuth();
 
   // 获取原始跳转路径，默认为 /chat
-  const from = (location.state as { from?: string })?.from || "/chat";
+  const from = (location.state as { from?: string })?.from || '/chat';
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     },
   });
 
@@ -51,19 +46,22 @@ const Login = () => {
     try {
       setErrorMessage(null);
       await login(values.email, values.password);
-      toast.success("登录成功", {
-        description: "欢迎回来",
+      toast.success('登录成功', {
+        description: '欢迎回来',
       });
       navigate(from, { replace: true });
     } catch (error: unknown) {
-      console.error("Login: 登录失败:", error);
+      console.error('Login: 登录失败:', error);
       const errMsg =
-        (error && typeof error === "object" && "response" in error && 
-          typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === "string")
+        error &&
+        typeof error === 'object' &&
+        'response' in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message ===
+          'string'
           ? (error as { response: { data: { message: string } } }).response.data.message
-          : "登录失败，请检查您的邮箱和密码";
+          : '登录失败，请检查您的邮箱和密码';
       setErrorMessage(errMsg);
-      toast.error("登录失败", {
+      toast.error('登录失败', {
         description: errMsg,
       });
     }
@@ -74,15 +72,11 @@ const Login = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">登录</CardTitle>
-          <CardDescription className="text-center">
-            输入您的邮箱和密码登录账户
-          </CardDescription>
+          <CardDescription className="text-center">输入您的邮箱和密码登录账户</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {errorMessage && (
-              <Alert variant="destructive">{errorMessage}</Alert>
-            )}
+            {errorMessage && <Alert variant="destructive">{errorMessage}</Alert>}
             <FieldGroup>
               <Controller
                 name="email"
@@ -98,9 +92,7 @@ const Login = () => {
                       autoComplete="email"
                       disabled={isLoginPending}
                     />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
                 )}
               />
@@ -110,7 +102,11 @@ const Login = () => {
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="password">密码</FieldLabel>
+                    <FieldLabel htmlFor="password">
+                      <div className="flex items-center justify-between">
+                        <span>密码</span>
+                      </div>
+                    </FieldLabel>
                     <Input
                       {...field}
                       id="password"
@@ -120,22 +116,23 @@ const Login = () => {
                       autoComplete="current-password"
                       disabled={isLoginPending}
                     />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    <Link to="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                      忘记密码？
+                    </Link>
                   </Field>
                 )}
               />
             </FieldGroup>
 
             <Button type="submit" className="w-full" disabled={isLoginPending}>
-              {isLoginPending ? "登录中..." : "登录"}
+              {isLoginPending ? '登录中...' : '登录'}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-gray-500">
-            还没有账户？{" "}
+            还没有账户？{' '}
             <Link to="/register" className="text-blue-600 hover:underline">
               注册
             </Link>

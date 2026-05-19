@@ -10,6 +10,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '../jwt/jwt.strategy';
 import { User, RefreshToken, PasswordResetToken } from '../entities';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { User, RefreshToken, PasswordResetToken } from '../entities';
       }),
       inject: [ConfigService],
     }),
+    MailModule,
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
