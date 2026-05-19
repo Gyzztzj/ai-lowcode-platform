@@ -83,7 +83,6 @@ export class FlowService {
           nodeCount: nodes.length,
         },
         success: true,
-        durationMs: endTime - startTime,
       });
 
       return executionPath;
@@ -94,10 +93,12 @@ export class FlowService {
         action: 'flow.execute',
         resourceType: 'app',
         resourceId: appId,
-        metadata: { error: (error as Error).message },
+        metadata: {
+          error: (error as Error).message,
+          durationMs: endTime - startTime,
+        },
         success: false,
         errorMessage: (error as Error).message,
-        durationMs: endTime - startTime,
       });
       throw error;
     }

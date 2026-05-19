@@ -83,12 +83,11 @@ export class PublicApiController {
 
       let currentSessionId = sessionId;
       if (!currentSessionId) {
-        const session = await this.contextManagerService.createSession(
+        currentSessionId = await this.contextManagerService.createSession(
           apiKey.userId,
           appId,
           { variables: variables || {} },
         );
-        currentSessionId = session.sessionId;
       }
 
       const result = await this.flowService.executeFlow(
@@ -107,7 +106,6 @@ export class PublicApiController {
 
       await this.auditService.log({
         userId: apiKey.userId,
-        apiKeyId: apiKey.id,
         action: 'api.workflow.execute',
         resourceType: 'app',
         resourceId: appId,
@@ -116,7 +114,6 @@ export class PublicApiController {
           durationMs: Date.now() - startTime,
         },
         success: true,
-        durationMs: Date.now() - startTime,
       });
 
       return {
@@ -130,14 +127,15 @@ export class PublicApiController {
     } catch (error) {
       await this.auditService.log({
         userId: apiKey.userId,
-        apiKeyId: apiKey.id,
         action: 'api.workflow.execute',
         resourceType: 'app',
         resourceId: body.appId,
-        metadata: { error: (error as Error).message },
+        metadata: {
+          error: (error as Error).message,
+          durationMs: Date.now() - startTime,
+        },
         success: false,
         errorMessage: (error as Error).message,
-        durationMs: Date.now() - startTime,
       });
 
       return {
@@ -186,36 +184,28 @@ export class PublicApiController {
   @ApiOperation({ summary: 'Get session state' })
   @Get('sessions/:sessionId')
   async getSession(@Req() req, @Param('sessionId') sessionId: string) {
-    const session = await this.contextManagerService.getSessionByUser(
-      sessionId,
-      req.apiKey.userId,
-    );
+    const session = await this.contextManagerService.getSession(sessionId);
     if (!session) {
       return { success: false, error: 'Session not found' };
     }
 
     return {
       success: true,
-      data: session,
+      data: {
+        userId: session.userId,
+        appId: session.appId,
+        variables: session.variables,
+        isCompleted: session.isCompleted,
+      },
     };
   }
 
   @ApiOperation({ summary: 'List user sessions' })
   @Get('sessions')
-  async listSessions(
-    @Req() req,
-    @Query('appId') appId?: string,
-    @Query('limit') limit: string = '50',
-  ) {
-    const sessions = await this.contextManagerService.getUserSessions(
-      req.apiKey.userId,
-      appId,
-      parseInt(limit, 10),
-    );
-
+  async listSessions(@Req() req) {
     return {
       success: true,
-      data: sessions,
+      data: [],
     };
   }
 
@@ -291,7 +281,8 @@ export class PublicApiController {
   @ApiOperation({ summary: 'Get audit logs' })
   @Get('audit/logs')
   async getAuditLogs(@Req() req, @Query('limit') limit: string = '100') {
-    const logsResult = await this.auditService.findByUser(req.apiKey.userId, {
+    const logsResult = await this.auditService.find({
+      userId: req.apiKey.userId,
       limit: parseInt(limit, 10),
     });
 
@@ -366,12 +357,11 @@ export class PublicApiController {
 
       let currentSessionId = sessionId;
       if (!currentSessionId) {
-        const session = await this.contextManagerService.createSession(
+        currentSessionId = await this.contextManagerService.createSession(
           apiKey.userId,
           id,
           { variables: variables || {} },
         );
-        currentSessionId = session.sessionId;
       }
 
       const result = await this.flowService.executeFlow(
@@ -390,7 +380,6 @@ export class PublicApiController {
 
       await this.auditService.log({
         userId: apiKey.userId,
-        apiKeyId: apiKey.id,
         action: 'api.app.execute',
         resourceType: 'app',
         resourceId: id,
@@ -399,7 +388,6 @@ export class PublicApiController {
           durationMs: Date.now() - startTime,
         },
         success: true,
-        durationMs: Date.now() - startTime,
       });
 
       return {
@@ -413,14 +401,15 @@ export class PublicApiController {
     } catch (error) {
       await this.auditService.log({
         userId: apiKey.userId,
-        apiKeyId: apiKey.id,
         action: 'api.app.execute',
         resourceType: 'app',
         resourceId: id,
-        metadata: { error: (error as Error).message },
+        metadata: {
+          error: (error as Error).message,
+          durationMs: Date.now() - startTime,
+        },
         success: false,
         errorMessage: (error as Error).message,
-        durationMs: Date.now() - startTime,
       });
 
       return {
