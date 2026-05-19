@@ -21,6 +21,7 @@ import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { User, RefreshToken, PasswordResetToken } from '../entities';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -38,6 +39,7 @@ export class AuthService {
     private passwordResetTokenRepository: Repository<PasswordResetToken>,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private mailService: MailService,
   ) {}
 
   /**
@@ -176,10 +178,7 @@ export class AuthService {
 
       await this.passwordResetTokenRepository.save(passwordResetToken);
 
-      return {
-        message: '密码重置链接已发送（在实际应用中，这里会发送邮件）',
-        token,
-      };
+      await this.mailService.sendPasswordResetEmail(email, token);
     }
 
     return {
