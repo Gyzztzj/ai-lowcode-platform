@@ -528,7 +528,7 @@ export class KnowledgeService {
       try {
         unlinkSync(document.filePath);
       } catch (e) {
-        console.error(`删除文档文件[${documentId}]失败:`, e);
+        console.error('删除文档文件[%s]失败:', documentId, e);
       }
     }
 
