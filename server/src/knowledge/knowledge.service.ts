@@ -349,7 +349,7 @@ export class KnowledgeService {
       document.filePath,
       document.fileType,
     ).catch(async (error) => {
-      console.error(`重处理文档[${documentId}]失败:`, error);
+      console.error('重处理文档[%s]失败:', documentId, error);
       await this.documentRepository.update(documentId, {
         status: DocumentStatus.FAILED,
       });
@@ -412,14 +412,14 @@ export class KnowledgeService {
 
       await this.processTextContentAsync(documentId, text, filePath);
     } catch (error) {
-      console.error(`异步处理文档[${documentId}]失败:`, error);
+      console.error('异步处理文档[%s]失败:', documentId, error);
       try {
         await this.documentRepository.update(documentId, {
           status: DocumentStatus.FAILED,
           chunkCount: 0,
         });
       } catch (updateError) {
-        console.error(`更新文档[${documentId}]状态失败:`, updateError);
+        console.error('更新文档[%s]状态失败:', documentId, updateError);
       }
     }
   }
