@@ -349,7 +349,7 @@ export class KnowledgeService {
       document.filePath,
       document.fileType,
     ).catch(async (error) => {
-      console.error(`重处理文档[${documentId}]失败:`, error);
+      console.error('重处理文档[%s]失败:', documentId, error);
       await this.documentRepository.update(documentId, {
         status: DocumentStatus.FAILED,
       });
