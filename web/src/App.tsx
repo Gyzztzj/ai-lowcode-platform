@@ -3,7 +3,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import AppRoutes from "./AppRoutes";
 import { Toaster } from "@/components/ui/sonner";
+import CookieConsent from "@/components/common/CookieConsent";
 import { useAppStore } from "./store/appStore";
+import { useModelStore } from "./store/modelStore";
+import { useKnowledgeStore } from "./store/knowledgeStore";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,8 +20,8 @@ const queryClient = new QueryClient({
 
 const AppInitializer = () => {
   const fetchApps = useAppStore((state) => state.fetchApps);
-  const fetchModels = useAppStore((state) => state.fetchModels);
-  const fetchKnowledgeBases = useAppStore((state) => state.fetchKnowledgeBases);
+  const fetchModels = useModelStore((state) => state.fetchModels);
+  const fetchKnowledgeBases = useKnowledgeStore((state) => state.fetchKnowledgeBases);
   const fetchConversations = useAppStore((state) => state.fetchConversations);
 
   useEffect(() => {
@@ -38,6 +41,7 @@ function App() {
       <Router>
         <AppInitializer />
         <AppRoutes />
+        <CookieConsent />
         <Toaster />
       </Router>
     </QueryClientProvider>

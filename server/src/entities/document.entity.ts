@@ -7,6 +7,7 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { DocumentStatus } from './document-status.enum';
 import { KnowledgeBase } from './knowledge-base.entity';
@@ -39,6 +40,7 @@ export class Document {
   @Column({ type: 'int', nullable: true })
   chunkCount: number | null;
 
+  @Index()
   @Column()
   knowledgeBaseId: string;
 

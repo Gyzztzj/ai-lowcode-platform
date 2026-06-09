@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { MessageRole } from './message-role.enum';
 import { Conversation } from './conversation.entity';
@@ -38,6 +39,7 @@ export class Message {
   @Column({ type: 'int', nullable: true })
   latencyMs: number | null;
 
+  @Index()
   @Column()
   conversationId: string;
 

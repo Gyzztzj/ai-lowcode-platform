@@ -59,6 +59,7 @@ export class ApiKey {
   @Column({ type: 'text', nullable: true })
   description: string;
 
+  @Index()
   @Column()
   userId: string;
 

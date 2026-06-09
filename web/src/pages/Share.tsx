@@ -66,7 +66,7 @@ const Share = () => {
     // 开始计时
     thinkingIntervalRef.current = setInterval(() => {
       setThinkingSeconds((prev) => prev + 1);
-    }, 1000);
+    }, 1000) as unknown as number;
 
     let fullContent = "";
     let hasReceivedContent = false;

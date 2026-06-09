@@ -13,7 +13,8 @@ interface NodeContextMenuProps {
 }
 
 const NodeContextMenu = ({ node, position, onClose, onEditProperties }: NodeContextMenuProps) => {
-  const { deleteNode, addNode } = useBuilderStore();
+  const deleteNode = useBuilderStore((s) => s.deleteNode);
+  const addNode = useBuilderStore((s) => s.addNode);
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuPosition, setMenuPosition] = useState(position);
 

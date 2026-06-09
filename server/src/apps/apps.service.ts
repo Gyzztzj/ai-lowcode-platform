@@ -108,6 +108,18 @@ export class AppsService {
   }
 
   /**
+   * 获取所有应用（配额管理用）
+   * @description 返回所有应用的基础信息及每日/每月配额，用于配额管理页。
+   *              仅 MANAGE_QUOTAS 权限用户可访问（controller 已做校验）。
+   */
+  async findAllForAdmin() {
+    return this.appRepository.find({
+      select: ['id', 'name', 'userId', 'dailyQuota', 'monthlyQuota'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  /**
    * 获取应用详情
    * @param id 应用ID
    * @param userId 用户ID

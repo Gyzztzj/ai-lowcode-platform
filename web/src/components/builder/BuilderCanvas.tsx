@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState, useRef } from "react";
-import { ReactFlow,
+import { useCallback, useEffect, useState, useRef } from 'react';
+import {
+  ReactFlow,
   Background,
   Controls,
   MiniMap,
@@ -13,30 +14,48 @@ import { ReactFlow,
   type NodeChange,
   type EdgeChange,
   type NodeTypes,
-} from "@xyflow/react";
-import { v4 as uuidv4 } from "uuid";
-import "@xyflow/react/dist/style.css";
-import { useBuilderStore } from "@/store/builderStore";
-import { nodeTypes } from "./nodes";
-import { useKeyPress } from "@/hooks/useKeyPress";
-import { useAppStore } from "@/store/appStore";
-import NodeContextMenu from "./NodeContextMenu";
-import NodePropertiesDialog from "./NodePropertiesDialog";
-import { EdgeContextMenu } from "./EdgeContextMenu";
-import type { App as AppType } from "@/types";
+} from '@xyflow/react';
+import { v4 as uuidv4 } from 'uuid';
+import '@xyflow/react/dist/style.css';
+import { useShallow } from 'zustand/shallow';
+import { useBuilderStore } from '@/store/builderStore';
+import { nodeTypes } from './nodes';
+import { useKeyPress } from '@/hooks/useKeyPress';
+import { useAppStore } from '@/store/appStore';
+import NodeContextMenu from './NodeContextMenu';
+import NodePropertiesDialog from './NodePropertiesDialog';
+import { EdgeContextMenu } from './EdgeContextMenu';
+import type { App as AppType } from '@/types';
 
 const BuilderCanvas = () => {
   const currentApp = useAppStore((state) => state.currentApp);
-  const nodes = useBuilderStore((state) => state.nodes);
-  const edges = useBuilderStore((state) => state.edges);
-  const selectedNode = useBuilderStore((state) => state.selectedNode);
-  const selectedEdge = useBuilderStore((state) => state.selectedEdge);
-  const setNodes = useBuilderStore((state) => state.setNodes);
-  const setEdges = useBuilderStore((state) => state.setEdges);
-  const setSelectedNode = useBuilderStore((state) => state.setSelectedNode);
-  const setSelectedEdge = useBuilderStore((state) => state.setSelectedEdge);
-  const deleteNode = useBuilderStore((state) => state.deleteNode);
-  const deleteEdge = useBuilderStore((state) => state.deleteEdge);
+
+  // 合并 builderStore 订阅，减少独立选择器数量
+  const {
+    nodes,
+    edges,
+    selectedNode,
+    selectedEdge,
+    setNodes,
+    setEdges,
+    setSelectedNode,
+    setSelectedEdge,
+    deleteNode,
+    deleteEdge,
+  } = useBuilderStore(
+    useShallow((state) => ({
+      nodes: state.nodes,
+      edges: state.edges,
+      selectedNode: state.selectedNode,
+      selectedEdge: state.selectedEdge,
+      setNodes: state.setNodes,
+      setEdges: state.setEdges,
+      setSelectedNode: state.setSelectedNode,
+      setSelectedEdge: state.setSelectedEdge,
+      deleteNode: state.deleteNode,
+      deleteEdge: state.deleteEdge,
+    })),
+  );
 
   const [nodeContextMenu, setNodeContextMenu] = useState<{
     node: Node | null;
@@ -89,14 +108,10 @@ const BuilderCanvas = () => {
   );
 
   // 按Delete键删除选中节点或边
-  useKeyPress("Delete", () => {
+  useKeyPress('Delete', () => {
     if (selectedEdge) {
       useBuilderStore.getState().deleteEdge(selectedEdge.id);
-    } else if (
-      selectedNode &&
-      selectedNode.type !== "start" &&
-      selectedNode.type !== "end"
-    ) {
+    } else if (selectedNode && selectedNode.type !== 'start' && selectedNode.type !== 'end') {
       deleteNode(selectedNode.id);
     }
   });
@@ -167,12 +182,8 @@ const BuilderCanvas = () => {
 
     if (currentApp) {
       const app = currentApp as AppType & { nodes?: unknown; edges?: unknown };
-      const validNodes = isArray(app.nodes)
-        ? (app.nodes as Node[])
-        : null;
-      const validEdges = isArray(app.edges)
-        ? (app.edges as Edge[])
-        : null;
+      const validNodes = isArray(app.nodes) ? (app.nodes as Node[]) : null;
+      const validEdges = isArray(app.edges) ? (app.edges as Edge[]) : null;
 
       if (validNodes && validEdges) {
         setNodes(validNodes);
@@ -181,35 +192,35 @@ const BuilderCanvas = () => {
         // 为旧应用或数据损坏的应用生成默认流程
         const defaultNodes: Node[] = [
           {
-            id: "start",
-            type: "start",
+            id: 'start',
+            type: 'start',
             position: { x: 100, y: 200 },
             data: {},
           },
           {
-            id: "system-prompt",
-            type: "systemPrompt",
+            id: 'system-prompt',
+            type: 'systemPrompt',
             position: { x: 350, y: 200 },
             data: { content: currentApp.systemPrompt },
           },
           {
-            id: "llm",
-            type: "llm",
+            id: 'llm',
+            type: 'llm',
             position: { x: 600, y: 200 },
             data: { model: currentApp.defaultModel },
           },
           {
-            id: "end",
-            type: "end",
+            id: 'end',
+            type: 'end',
             position: { x: 850, y: 200 },
             data: {},
           },
         ];
 
         const defaultEdges: Edge[] = [
-          { id: "e1", source: "start", target: "system-prompt" },
-          { id: "e2", source: "system-prompt", target: "llm" },
-          { id: "e3", source: "llm", target: "end" },
+          { id: 'e1', source: 'start', target: 'system-prompt' },
+          { id: 'e2', source: 'system-prompt', target: 'llm' },
+          { id: 'e3', source: 'llm', target: 'end' },
         ];
 
         setNodes(defaultNodes);
@@ -220,12 +231,12 @@ const BuilderCanvas = () => {
 
   const onDragOver = (event: React.DragEvent) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
+    event.dataTransfer.dropEffect = 'move';
   };
 
   const onDrop = (event: React.DragEvent) => {
     event.preventDefault();
-    const nodeDataStr = event.dataTransfer.getData("application/reactflow");
+    const nodeDataStr = event.dataTransfer.getData('application/reactflow');
 
     if (!nodeDataStr) return;
 
@@ -240,7 +251,7 @@ const BuilderCanvas = () => {
         label: nodeData.label,
         color: nodeData.color,
       };
-      
+
       // 为变量设置节点添加初始的空变量数组
       if (nodeData.type === 'variableSet') {
         newNodeData.variables = [];
@@ -268,16 +279,12 @@ const BuilderCanvas = () => {
 
       setNodes([...nodes, newNode]);
     } catch (e) {
-      console.error("Failed to parse node data", e);
+      console.error('Failed to parse node data', e);
     }
   };
 
   return (
-    <div
-      className="flex-1 bg-gray-50 relative"
-      onDrop={onDrop}
-      onDragOver={onDragOver}
-    >
+    <div className="flex-1 bg-gray-50 relative" onDrop={onDrop} onDragOver={onDragOver}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -304,7 +311,7 @@ const BuilderCanvas = () => {
         edgesReconnectable
         defaultEdgeOptions={{
           animated: true,
-          style: { stroke: "#6366f1" },
+          style: { stroke: '#6366f1' },
         }}
       >
         <Background />
@@ -322,10 +329,7 @@ const BuilderCanvas = () => {
       )}
 
       {edgeContextMenu && (
-        <EdgeContextMenu
-          position={edgeContextMenu.position}
-          onClose={closeContextMenus}
-        />
+        <EdgeContextMenu position={edgeContextMenu.position} onClose={closeContextMenus} />
       )}
 
       <NodePropertiesDialog

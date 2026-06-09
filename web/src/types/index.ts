@@ -20,6 +20,8 @@ export interface App {
   edges?: unknown;
   isPublic: boolean;
   userId: string;
+  dailyQuota?: number | null;
+  monthlyQuota?: number | null;
   createdAt: string;
   updatedAt: string;
 }

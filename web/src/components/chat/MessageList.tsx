@@ -8,14 +8,12 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { MessageSkeleton } from './MessageSkeleton';
 
 const MessageList = () => {
-  const {
-    messages,
-    activeConversations,
-    currentApp,
-    currentConversation,
-    deleteMessage,
-    isLoadingMessages,
-  } = useAppStore();
+  const messages = useAppStore((s) => s.messages);
+  const activeConversations = useAppStore((s) => s.activeConversations);
+  const currentApp = useAppStore((s) => s.currentApp);
+  const currentConversation = useAppStore((s) => s.currentConversation);
+  const deleteMessage = useAppStore((s) => s.deleteMessage);
+  const isLoadingMessages = useAppStore((s) => s.isLoadingMessages);
 
   // 获取当前会话的发送状态
   const isSending = activeConversations.get(currentConversation?.id || '')?.isSending || false;
