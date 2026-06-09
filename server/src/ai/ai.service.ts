@@ -148,7 +148,7 @@ export class AiService {
       });
       return model;
     } catch (err) {
-      console.error(`查找自定义模型[${modelId}]失败:`, err);
+      console.error('查找自定义模型[%s]失败:', modelId, err);
       return null;
     }
   }
