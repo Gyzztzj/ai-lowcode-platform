@@ -367,7 +367,7 @@ export class ConversationsService {
           await new Promise((resolve) => setTimeout(resolve, 2));
         }
       } catch (err) {
-        console.error(`流式执行对话[${id}]失败:`, err);
+        console.error('流式执行对话[%s]失败:', id, err);
         fullContent = '抱歉，执行出错了，请稍后重试。';
         transformStream.push(
           `data: ${JSON.stringify({ status: 'error', content: fullContent })}\n\n`,
