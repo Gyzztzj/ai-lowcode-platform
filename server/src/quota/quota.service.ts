@@ -113,13 +113,26 @@ export class QuotaService {
   }
 
   private async getUsage(key: string): Promise<number> {
-    const value = await this.redisService.get(key);
-    return value ? parseInt(value, 10) : 0;
+    try {
+      const value = await this.redisService.get(key);
+      return value ? parseInt(value, 10) : 0;
+    } catch (err) {
+      this.logger.warn(
+        `getUsage failed for key=${key}: ${(err as Error).message}`,
+      );
+      return 0;
+    }
   }
 
   private async incrementUsage(key: string): Promise<void> {
-    await this.redisService.getClient().incr(key);
-    await this.redisService.getClient().expire(key, 60 * 60 * 24 * 31);
+    try {
+      await this.redisService.incr(key);
+      await this.redisService.expire(key, 60 * 60 * 24 * 31);
+    } catch (err) {
+      this.logger.warn(
+        `incrementUsage failed for key=${key}: ${(err as Error).message}`,
+      );
+    }
   }
 
   async getQuotaInfo(userId: string): Promise<{

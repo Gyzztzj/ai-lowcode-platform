@@ -8,6 +8,7 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from './user.entity';
 import { Document } from './document.entity';
@@ -27,6 +28,7 @@ export class KnowledgeBase {
   @Column({ default: false })
   isPublic: boolean;
 
+  @Index()
   @Column()
   userId: string;
 

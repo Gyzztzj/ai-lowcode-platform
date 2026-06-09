@@ -21,8 +21,9 @@ interface PreviewDialogProps {
 }
 
 const PreviewDialog = ({ open, onOpenChange }: PreviewDialogProps) => {
-  const { nodes, edges } = useBuilderStore();
-  const { currentApp } = useAppStore();
+  const nodes = useBuilderStore((s) => s.nodes);
+  const edges = useBuilderStore((s) => s.edges);
+  const currentApp = useAppStore((s) => s.currentApp);
   const [messages, setMessages] = useState<
     Array<{ role: string; content: string; id?: string }>
   >([]);

@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { App } from "@/types";
 import { useAppStore } from "@/store/appStore";
+import { useModelStore } from "@/store/modelStore";
 import {
   Dialog,
   DialogContent,
@@ -50,7 +51,7 @@ interface EditAppDialogProps {
 const EditAppDialog = ({ open, onOpenChange, app }: EditAppDialogProps) => {
   const createApp = useAppStore((state) => state.createApp);
   const updateApp = useAppStore((state) => state.updateApp);
-  const models = useAppStore((state) => state.models);
+  const models = useModelStore((state) => state.models);
 
   // 筛选模型并缓存
   const chatModels = useMemo(() => {

@@ -23,6 +23,9 @@ import type {
   CreateKnowledgeBaseRequest,
   CreateModelRequest,
   UpdateModelRequest,
+  CreateRoleRequest,
+  UpdateRoleRequest,
+  UpdateQuotaRequest,
 } from "@/types/api.types";
 import type { User, App, Conversation, KnowledgeBase, Model } from "@/types";
 
@@ -52,6 +55,85 @@ export const authApi = {
 
   resetPassword: (data: ResetPasswordRequest): Promise<{ message: string }> =>
     api.post("/auth/password/reset", data),
+};
+
+// ==================== 角色管理 API ====================
+export interface RoleFromApi {
+  id: string;
+  name: string;
+  description: string | null;
+  permissions: string[];
+  isSystem: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+
+
+export const rolesApi = {
+  getAll: (): Promise<RoleFromApi[]> => api.get("/roles"),
+
+  create: (data: CreateRoleRequest): Promise<RoleFromApi> =>
+    api.post("/roles", data),
+
+  update: (id: string, data: UpdateRoleRequest): Promise<RoleFromApi> =>
+    api.patch(`/roles/${id}`, data),
+
+  delete: (id: string): Promise<void> => api.delete(`/roles/${id}`),
+};
+
+// ==================== 用户接口 ====================
+export interface UserFromApi {
+  id: string;
+  email: string;
+  name: string | null;
+  role: 'ADMIN' | 'USER';
+  createdAt: string;
+}
+
+export const usersApi = {
+  getAll: (): Promise<UserFromApi[]> => api.get('/users'),
+};
+
+// ==================== 配额管理 API ====================
+// 后端接口：
+//   GET /quota/user/:userId   → 单个用户配额/用量
+//   PUT /quota/user/:userId   → 更新用户配额
+//   PUT /quota/app/:appId     → 更新应用配额
+//   GET /apps/all             → 管理员视角的所有应用（含 dailyQuota/monthlyQuota）
+// 用户配额列表由前端拼装：GET /users + 对每个 user 调 GET /quota/user/:userId。
+export interface UserQuotaFromApi {
+  dailyQuota: number;
+  monthlyQuota: number;
+  dailyUsed: number;
+  monthlyUsed: number;
+}
+
+export interface AppQuotaFromApi {
+  id: string;
+  name: string;
+  userId: string;
+  dailyQuota: number | null;
+  monthlyQuota: number | null;
+}
+
+export const quotaApi = {
+  // 单个用户的配额/用量
+  getUserQuota: (userId: string): Promise<UserQuotaFromApi> =>
+    api.get(`/quota/user/${userId}`),
+
+  // 管理员视角的所有应用（含配额字段）
+  getAllAppsForAdmin: (): Promise<AppQuotaFromApi[]> => api.get('/apps/all'),
+
+  updateUserQuota: (
+    userId: string,
+    data: UpdateQuotaRequest,
+  ): Promise<{ message: string }> => api.put(`/quota/user/${userId}`, data),
+
+  updateAppQuota: (
+    appId: string,
+    data: UpdateQuotaRequest,
+  ): Promise<{ message: string }> => api.put(`/quota/app/${appId}`, data),
 };
 
 // ==================== 应用 API ====================

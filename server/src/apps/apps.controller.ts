@@ -23,6 +23,11 @@ import { ValidateFlowDto } from './dto/validate-flow.dto';
 import { PreviewFlowDto } from './dto/preview-flow.dto';
 import { FlowValidationPipe } from './pipes/flow-validation.pipe';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { PermissionsGuard } from '../guards/permissions.guard';
+import {
+  RequirePermissions,
+  Permission,
+} from '../decorators/permissions.decorator';
 import { FlowService } from '../flow/flow.service';
 import { FlowNode, FlowEdge } from '../flow/flow.types';
 import { Readable } from 'stream';
@@ -60,6 +65,17 @@ export class AppsController {
   @UseGuards(JwtAuthGuard)
   findAll(@Request() req: AuthenticatedRequest) {
     return this.appsService.findAll(req.user.id);
+  }
+
+  /**
+   * 管理员获取所有应用（配额管理用）
+   * @returns 所有应用基础信息（含配额字段）
+   */
+  @Get('all')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(Permission.MANAGE_QUOTAS)
+  findAllForAdmin() {
+    return this.appsService.findAllForAdmin();
   }
 
   /**

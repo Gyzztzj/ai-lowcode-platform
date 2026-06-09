@@ -130,13 +130,16 @@ const Login = () => {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-center">
+        <CardFooter className="flex flex-col gap-2 justify-center">
           <p className="text-sm text-gray-500">
             还没有账户？{' '}
             <Link to="/register" className="text-blue-600 hover:underline">
               注册
             </Link>
           </p>
+          <Link to="/privacy-policy" className="text-xs text-gray-400 hover:text-gray-600">
+            隐私政策
+          </Link>
         </CardFooter>
       </Card>
     </div>

@@ -340,6 +340,11 @@ export class ConversationsService {
       }));
 
       try {
+        // 先推送执行中状态，避免前端长时间无响应
+        transformStream.push(
+          `data: ${JSON.stringify({ status: 'executing' })}\n\n`,
+        );
+
         const result = await this.flowService.executeFlow(
           app.nodes,
           app.edges,
@@ -351,19 +356,21 @@ export class ConversationsService {
 
         fullContent = result.result;
 
-        // 模拟流式返回，逐字符发送
-        for (let i = 0; i < fullContent.length; i++) {
-          const char = fullContent[i];
+        // 按小段分片发送，模拟流式效果，大幅减少延迟
+        const chunkSize = 8;
+        for (let i = 0; i < fullContent.length; i += chunkSize) {
+          const chunk = fullContent.substring(i, i + chunkSize);
           transformStream.push(
-            `data: ${JSON.stringify({ content: char })}\n\n`,
+            `data: ${JSON.stringify({ content: chunk })}\n\n`,
           );
-          // 添加小延迟让它看起来像流式
-          await new Promise((resolve) => setTimeout(resolve, 10));
+          // 小延迟让前端有时间渲染
+          await new Promise((resolve) => setTimeout(resolve, 2));
         }
-      } catch {
+      } catch (err) {
+        console.error('流式执行对话[%s]失败:', id, err);
         fullContent = '抱歉，执行出错了，请稍后重试。';
         transformStream.push(
-          `data: ${JSON.stringify({ content: fullContent })}\n\n`,
+          `data: ${JSON.stringify({ status: 'error', content: fullContent })}\n\n`,
         );
       }
 
@@ -415,7 +422,9 @@ export class ConversationsService {
         stream.on('end', () => {
           this.saveAssistantMessage(id, fullContent)
             .then(() => this.touchConversation(id))
-            .catch(() => {})
+            .catch((err) => {
+              console.error('保存流式消息[%s]失败:', id, err);
+            })
             .finally(() => {
               transformStream.push(null);
               resolve();

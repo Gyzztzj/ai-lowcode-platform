@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAppStore } from '@/store/appStore';
+import { useKnowledgeStore } from '@/store/knowledgeStore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -37,7 +37,7 @@ type CreateKnowledgeBaseValues = z.infer<typeof createKnowledgeBaseSchema>;
 
 const Knowledge = () => {
   const { knowledgeBases, fetchKnowledgeBases, createKnowledgeBase, deleteKnowledgeBase } =
-    useAppStore();
+    useKnowledgeStore();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
