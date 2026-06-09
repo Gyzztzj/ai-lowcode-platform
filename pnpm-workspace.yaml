@@ -1,0 +1,9 @@
+packages:
+  - 'server'
+  - 'web'
+allowBuilds:
+  '@scarf/scarf': true
+  bcrypt: true
+  esbuild: true
+  msw: true
+  unrs-resolver: true
