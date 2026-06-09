@@ -419,7 +419,7 @@ export class KnowledgeService {
           chunkCount: 0,
         });
       } catch (updateError) {
-        console.error(`更新文档[${documentId}]状态失败:`, updateError);
+        console.error('更新文档[%s]状态失败:', documentId, updateError);
       }
     }
   }
