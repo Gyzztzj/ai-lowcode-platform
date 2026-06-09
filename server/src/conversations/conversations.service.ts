@@ -423,7 +423,7 @@ export class ConversationsService {
           this.saveAssistantMessage(id, fullContent)
             .then(() => this.touchConversation(id))
             .catch((err) => {
-              console.error(`保存流式消息[${id}]失败:`, err);
+              console.error('保存流式消息[%s]失败:', id, err);
             })
             .finally(() => {
               transformStream.push(null);
