@@ -147,7 +147,8 @@ export class AiService {
         ],
       });
       return model;
-    } catch {
+    } catch (err) {
+      console.error('查找自定义模型[%s]失败:', modelId, err);
       return null;
     }
   }
@@ -489,7 +490,9 @@ export class AiService {
             if (content) {
               transformStream.push(`data: ${JSON.stringify({ content })}\n\n`);
             }
-          } catch (e) {}
+          } catch (e) {
+            console.error('流式响应数据解析失败:', e, '原始数据:', data);
+          }
         }
       }
     });

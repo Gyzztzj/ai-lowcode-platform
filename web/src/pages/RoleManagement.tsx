@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -12,7 +12,7 @@ import {
 import { Plus, Edit2, Trash2, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import RoleFormDialog from '@/components/roles/RoleFormDialog';
-import api from '@/lib/axios';
+import { useRoles, useRolesMutations } from '@/hooks/useApi';
 
 interface Role {
   id: string;
@@ -25,31 +25,13 @@ interface Role {
 }
 
 const RoleManagement = () => {
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { data: roles = [], isPending: isLoading, refetch } = useRoles();
+  const { deleteRole, isDeleteRolePending } = useRolesMutations();
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-
-  const fetchRoles = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const data = (await api.get('/roles')) as unknown as Role[];
-      setRoles(data);
-    } catch (error) {
-      console.error('获取角色列表失败:', error);
-      toast.error('加载失败', { description: '无法加载角色列表，请稍后重试' });
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    fetchRoles();
-  }, []);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleEditRole = (role: Role) => {
     setSelectedRole(role);
@@ -58,8 +40,7 @@ const RoleManagement = () => {
 
   const handleDeleteRole = async (roleId: string) => {
     try {
-      await api.delete(`/roles/${roleId}`);
-      setRoles(roles.filter((r) => r.id !== roleId));
+      await deleteRole(roleId);
       toast.success('删除成功', { description: '角色已删除' });
       setIsDeleteDialogOpen(null);
     } catch (error) {
@@ -187,14 +168,15 @@ const RoleManagement = () => {
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         role={null}
-        onSuccess={fetchRoles}
+        onSuccess={refetch}
       />
 
       <RoleFormDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         role={selectedRole}
-        onSuccess={fetchRoles}
+        onSuccess={refetch}
+        key={selectedRole?.id || 'edit-new'}
       />
 
       <Dialog
@@ -215,8 +197,9 @@ const RoleManagement = () => {
             <Button
               variant="destructive"
               onClick={() => isDeleteDialogOpen && handleDeleteRole(isDeleteDialogOpen)}
+              disabled={isDeleteRolePending}
             >
-              删除
+              {isDeleteRolePending ? '删除中...' : '删除'}
             </Button>
           </DialogFooter>
         </DialogContent>

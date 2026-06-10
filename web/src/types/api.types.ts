@@ -132,6 +132,25 @@ export interface UpdateModelRequest {
   enabled?: boolean;
 }
 
+// ==================== 角色管理 API 类型 ====================
+export interface CreateRoleRequest {
+  name: string;
+  description?: string;
+  permissions: string[];
+}
+
+export interface UpdateRoleRequest {
+  name?: string;
+  description?: string;
+  permissions?: string[];
+}
+
+// ==================== 配额管理 API 类型 ====================
+export interface UpdateQuotaRequest {
+  dailyQuota: number;
+  monthlyQuota: number;
+}
+
 // ==================== 知识库 API 类型 ====================
 export interface CreateKnowledgeBaseRequest {
   name: string;

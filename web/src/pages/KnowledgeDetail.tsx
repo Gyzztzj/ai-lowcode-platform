@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAppStore } from '@/store/appStore';
+import { useKnowledgeStore } from '@/store/knowledgeStore';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { ArrowLeft, Upload, Trash2, FileText } from 'lucide-react';
@@ -11,7 +11,7 @@ const KnowledgeDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentKnowledgeBase, fetchKnowledgeBaseById, uploadDocument, deleteDocument } =
-    useAppStore();
+    useKnowledgeStore();
   const [isUploading, setIsUploading] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);

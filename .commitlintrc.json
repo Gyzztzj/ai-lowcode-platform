@@ -18,6 +18,8 @@
         "revert"
       ]
     ],
-    "subject-case": [0]
+    "subject-case": [0],
+    "body-max-line-length": [2, "always", 500],
+    "footer-max-line-length": [2, "always", 500]
   }
 }

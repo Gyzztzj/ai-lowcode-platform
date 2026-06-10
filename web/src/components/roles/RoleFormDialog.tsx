@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +15,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import api from '@/lib/axios';
+import { useRolesMutations } from '@/hooks/useApi';
 
 interface Role {
   id: string;
@@ -55,38 +55,18 @@ const ALL_PERMISSIONS = [
 ];
 
 const RoleFormDialog = ({ open, onOpenChange, role, onSuccess }: RoleFormDialogProps) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const { createRole, updateRole, isCreateRolePending, isUpdateRolePending } =
+    useRolesMutations();
+
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
     permissions: string[];
-  }>({
-    name: '',
-    description: '',
-    permissions: [],
-  });
-
-  const updateFormData = useCallback((roleData: Role | null) => {
-    if (roleData) {
-      setFormData({
-        name: roleData.name,
-        description: roleData.description || '',
-        permissions: [...roleData.permissions],
-      });
-    } else {
-      setFormData({
-        name: '',
-        description: '',
-        permissions: [],
-      });
-    }
-  }, []);
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    updateFormData(role);
-  }, [role, updateFormData]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  }>(() => ({
+    name: role?.name || '',
+    description: role?.description || '',
+    permissions: role?.permissions ? [...role.permissions] : [],
+  }));
 
   const isSystemRole = role?.isSystem;
 
@@ -103,24 +83,23 @@ const RoleFormDialog = ({ open, onOpenChange, role, onSuccess }: RoleFormDialogP
     });
   };
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast.error('请填写角色名称');
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const requestData = {
-        name: formData.name.trim(),
-        description: formData.description.trim() || undefined,
-        permissions: formData.permissions,
-      };
+    const requestData = {
+      name: formData.name.trim(),
+      description: formData.description.trim() || undefined,
+      permissions: formData.permissions,
+    };
 
+    try {
       if (role) {
-        await api.patch(`/roles/${role.id}`, requestData);
+        await updateRole({ id: role.id, data: requestData });
       } else {
-        await api.post('/roles', requestData);
+        await createRole(requestData);
       }
 
       toast.success(role ? '更新成功' : '创建成功', {
@@ -133,10 +112,8 @@ const RoleFormDialog = ({ open, onOpenChange, role, onSuccess }: RoleFormDialogP
       toast.error(role ? '更新失败' : '创建失败', {
         description: role ? '无法更新角色' : '无法创建角色',
       });
-    } finally {
-      setIsLoading(false);
     }
-  }, [role, formData, onOpenChange, onSuccess]);
+  };
 
   const groupedPermissions = ALL_PERMISSIONS.reduce(
     (acc, permission) => {
@@ -148,6 +125,8 @@ const RoleFormDialog = ({ open, onOpenChange, role, onSuccess }: RoleFormDialogP
     },
     {} as Record<string, typeof ALL_PERMISSIONS>,
   );
+
+  const isLoading = isCreateRolePending || isUpdateRolePending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -188,7 +167,9 @@ const RoleFormDialog = ({ open, onOpenChange, role, onSuccess }: RoleFormDialogP
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 placeholder="添加关于此角色的描述"
                 className="mt-1"
                 rows={3}
@@ -204,37 +185,47 @@ const RoleFormDialog = ({ open, onOpenChange, role, onSuccess }: RoleFormDialogP
                 </span>
               </Label>
               <div className="mt-4 space-y-4">
-                {Object.entries(groupedPermissions).map(([category, permissions]) => (
-                  <div key={category}>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">{category}</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      {permissions.map((permission) => (
-                        <label
-                          key={permission.key}
-                          className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-colors ${
-                            formData.permissions.includes(permission.key)
-                              ? 'bg-blue-50 border-blue-200'
-                              : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                          } ${isSystemRole ? 'cursor-not-allowed opacity-60' : ''}`}
-                        >
-                          <Checkbox
-                            checked={formData.permissions.includes(permission.key)}
-                            onCheckedChange={() => togglePermission(permission.key)}
-                            disabled={isSystemRole}
-                          />
-                          <span className="text-sm text-gray-700">{permission.label}</span>
-                        </label>
-                      ))}
+                {Object.entries(groupedPermissions).map(
+                  ([category, permissions]) => (
+                    <div key={category}>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">
+                        {category}
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {permissions.map((permission) => (
+                          <label
+                            key={permission.key}
+                            className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-colors ${
+                              formData.permissions.includes(permission.key)
+                                ? 'bg-blue-50 border-blue-200'
+                                : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                            } ${isSystemRole ? 'cursor-not-allowed opacity-60' : ''}`}
+                          >
+                            <Checkbox
+                              checked={formData.permissions.includes(permission.key)}
+                              onCheckedChange={() => togglePermission(permission.key)}
+                              disabled={isSystemRole}
+                            />
+                            <span className="text-sm text-gray-700">
+                              {permission.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ),
+                )}
               </div>
             </div>
           </div>
         </DialogContentScrollable>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isLoading}>
+          <Button
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+          >
             取消
           </Button>
           <Button onClick={handleSubmit} disabled={isLoading}>
@@ -247,3 +238,4 @@ const RoleFormDialog = ({ open, onOpenChange, role, onSuccess }: RoleFormDialogP
 };
 
 export default RoleFormDialog;
+

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAppStore } from "@/store/appStore";
+import { useModelStore } from "@/store/modelStore";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import AppCard from "@/components/apps/AppCard";
@@ -8,7 +9,7 @@ import EditAppDialog from "@/components/apps/EditAppDialog";
 const Apps = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const apps = useAppStore((state) => state.apps);
-  const fetchModels = useAppStore((state) => state.fetchModels);
+  const fetchModels = useModelStore((state) => state.fetchModels);
 
   useEffect(() => {
     // 确保模型数据已加载

@@ -3,7 +3,7 @@
  */
 import BaseNode from "./BaseNode";
 import type { NodeProps } from "@xyflow/react";
-import { useAppStore } from "@/store/appStore";
+import { useKnowledgeStore } from "@/store/knowledgeStore";
 import type { KnowledgeBase } from "@/types";
 
 const KnowledgeBaseNode = ({ data }: NodeProps) => {
@@ -13,7 +13,7 @@ const KnowledgeBaseNode = ({ data }: NodeProps) => {
     knowledgeBase?: string;
     query?: string;
   };
-  const knowledgeBases = useAppStore((state) => state.knowledgeBases);
+  const knowledgeBases = useKnowledgeStore((state) => state.knowledgeBases);
   const kbId = typedData.knowledgeBaseId || typedData.knowledgeBase;
   const kb = knowledgeBases.find((k: KnowledgeBase) => k.id === kbId);
 

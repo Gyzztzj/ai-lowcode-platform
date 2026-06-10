@@ -5,6 +5,9 @@ import {
   conversationsApi,
   modelsApi,
   knowledgeApi,
+  rolesApi,
+  quotaApi,
+  usersApi,
 } from "@/lib/api-client";
 import { useUserStore } from "@/store/userStore";
 import type {
@@ -12,6 +15,9 @@ import type {
   UpdateAppFlowRequest,
   UpdateConversationRequest,
   SendMessageRequest,
+  CreateRoleRequest,
+  UpdateRoleRequest,
+  UpdateQuotaRequest,
 } from "@/types/api.types";
 
 export const useAuth = () => {
@@ -289,5 +295,165 @@ export const useKnowledgeMutations = () => {
     isDeleteKnowledgeBasePending: deleteKnowledgeBaseMutation.isPending,
     isUploadDocumentPending: uploadDocumentMutation.isPending,
     isDeleteDocumentPending: deleteDocumentMutation.isPending,
+  };
+};
+
+// ==================== 角色管理 Hooks ====================
+export const useRoles = () => {
+  return useQuery({
+    queryKey: ["roles"],
+    queryFn: rolesApi.getAll,
+  });
+};
+
+export const useRolesMutations = () => {
+  const queryClient = useQueryClient();
+
+  const createRoleMutation = useMutation({
+    mutationFn: (data: CreateRoleRequest) => rolesApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
+    },
+  });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateRoleRequest;
+    }) => rolesApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
+    },
+  });
+
+  const deleteRoleMutation = useMutation({
+    mutationFn: (id: string) => rolesApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
+    },
+  });
+
+  return {
+    createRole: createRoleMutation.mutateAsync,
+    updateRole: updateRoleMutation.mutateAsync,
+    deleteRole: deleteRoleMutation.mutateAsync,
+    isCreateRolePending: createRoleMutation.isPending,
+    isUpdateRolePending: updateRoleMutation.isPending,
+    isDeleteRolePending: deleteRoleMutation.isPending,
+  };
+};
+
+// ==================== 配额管理 Hooks ====================
+// 用户配额：GET /users 取列表，再对每个 user 调 GET /quota/user/:userId，
+// 在 queryFn 内部组装成带配额的用户视图。
+export interface UserQuotaView {
+  id: string;
+  email: string;
+  name: string;
+  dailyQuota: number;
+  monthlyQuota: number;
+  dailyUsed: number;
+  monthlyUsed: number;
+}
+
+export const useUserQuotas = () => {
+  return useQuery({
+    queryKey: ["userQuotas"],
+    queryFn: async (): Promise<UserQuotaView[]> => {
+      const users = await usersApi.getAll();
+      const results = await Promise.all(
+        users.map(async (user) => {
+          try {
+            const quota = await quotaApi.getUserQuota(user.id);
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name || user.email,
+              dailyQuota: quota.dailyQuota,
+              monthlyQuota: quota.monthlyQuota,
+              dailyUsed: quota.dailyUsed,
+              monthlyUsed: quota.monthlyUsed,
+            };
+          } catch {
+            // 单个用户配额读取失败时不影响整体列表
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name || user.email,
+              dailyQuota: 0,
+              monthlyQuota: 0,
+              dailyUsed: 0,
+              monthlyUsed: 0,
+            };
+          }
+        }),
+      );
+      return results;
+    },
+  });
+};
+
+// 应用配额：直接走 GET /apps/all（管理员视角，含所有应用的配额字段）。
+export interface AppQuotaView {
+  id: string;
+  name: string;
+  userId: string;
+  dailyQuota: number | null;
+  monthlyQuota: number | null;
+}
+
+export const useAppQuotas = () => {
+  return useQuery({
+    queryKey: ["appQuotas"],
+    queryFn: async (): Promise<AppQuotaView[]> => {
+      const apps = await quotaApi.getAllAppsForAdmin();
+      return apps.map((app) => ({
+        id: app.id,
+        name: app.name,
+        userId: app.userId,
+        dailyQuota: app.dailyQuota ?? null,
+        monthlyQuota: app.monthlyQuota ?? null,
+      }));
+    },
+  });
+};
+
+export const useQuotaMutations = () => {
+  const queryClient = useQueryClient();
+
+  const updateUserQuotaMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateQuotaRequest;
+    }) => quotaApi.updateUserQuota(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["userQuotas"] });
+    },
+  });
+
+  const updateAppQuotaMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateQuotaRequest;
+    }) => quotaApi.updateAppQuota(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appQuotas"] });
+    },
+  });
+
+  return {
+    updateUserQuota: updateUserQuotaMutation.mutateAsync,
+    updateAppQuota: updateAppQuotaMutation.mutateAsync,
+    isUpdateUserQuotaPending: updateUserQuotaMutation.isPending,
+    isUpdateAppQuotaPending: updateAppQuotaMutation.isPending,
   };
 };

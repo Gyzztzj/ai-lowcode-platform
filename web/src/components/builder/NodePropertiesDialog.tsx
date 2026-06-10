@@ -1,6 +1,8 @@
 import { useMemo, useRef } from "react";
 import type { KnowledgeBase } from "@/types";
 import { useAppStore } from "@/store/appStore";
+import { useKnowledgeStore } from "@/store/knowledgeStore";
+import { useModelStore } from "@/store/modelStore";
 import { useBuilderStore } from "@/store/builderStore";
 import {
   Dialog,
@@ -55,8 +57,8 @@ const NodePropertiesDialog = ({
   const nodes = useBuilderStore((state) => state.nodes);
   const edges = useBuilderStore((state) => state.edges);
   const updateNode = useBuilderStore((state) => state.updateNode);
-  const knowledgeBases = useAppStore((state) => state.knowledgeBases);
-  const models = useAppStore((state) => state.models);
+  const knowledgeBases = useKnowledgeStore((state) => state.knowledgeBases);
+  const models = useModelStore((state) => state.models);
   const currentApp = useAppStore((state) => state.currentApp);
 
   const availableModels = useMemo(() => {

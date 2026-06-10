@@ -8,6 +8,7 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from './user.entity';
 import { Conversation } from './conversation.entity';
@@ -46,6 +47,7 @@ export class App {
   @Column('json', { nullable: true })
   edges: FlowEdge[] | null;
 
+  @Index()
   @Column()
   userId: string;
 

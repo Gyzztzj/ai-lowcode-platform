@@ -201,6 +201,7 @@ export class KnowledgeService {
     // 异步处理文档
     this.processDocumentAsync(document.id, filePath, fileExt).catch(
       async (error) => {
+        console.error(`处理文档[${document.id}]失败:`, error);
         await this.documentRepository.update(document.id, {
           status: DocumentStatus.FAILED,
         });
@@ -256,6 +257,7 @@ export class KnowledgeService {
 
       this.processDocumentAsync(document.id, filePath, fileExt).catch(
         async (error) => {
+          console.error(`批量处理文档[${document.id}]失败:`, error);
           await this.documentRepository.update(document.id, {
             status: DocumentStatus.FAILED,
           });
@@ -297,6 +299,7 @@ export class KnowledgeService {
 
     this.processTextAsync(document.id, content, crawledUrl).catch(
       async (error) => {
+        console.error(`爬取处理文档[${document.id}]失败:`, error);
         await this.documentRepository.update(document.id, {
           status: DocumentStatus.FAILED,
         });
@@ -346,6 +349,7 @@ export class KnowledgeService {
       document.filePath,
       document.fileType,
     ).catch(async (error) => {
+      console.error('重处理文档[%s]失败:', documentId, error);
       await this.documentRepository.update(documentId, {
         status: DocumentStatus.FAILED,
       });
@@ -408,12 +412,15 @@ export class KnowledgeService {
 
       await this.processTextContentAsync(documentId, text, filePath);
     } catch (error) {
+      console.error(`异步处理文档[${documentId}]失败:`, error);
       try {
         await this.documentRepository.update(documentId, {
           status: DocumentStatus.FAILED,
           chunkCount: 0,
         });
-      } catch (updateError) {}
+      } catch (updateError) {
+        console.error('更新文档[%s]状态失败:', documentId, updateError);
+      }
     }
   }
 
@@ -431,12 +438,15 @@ export class KnowledgeService {
     try {
       await this.processTextContentAsync(documentId, text, sourceUrl);
     } catch (error) {
+      console.error(`异步处理文本[${documentId}]失败:`, error);
       try {
         await this.documentRepository.update(documentId, {
           status: DocumentStatus.FAILED,
           chunkCount: 0,
         });
-      } catch (updateError) {}
+      } catch (updateError) {
+        console.error(`更新文档[${documentId}]状态失败:`, updateError);
+      }
     }
   }
 
@@ -467,20 +477,23 @@ export class KnowledgeService {
 
     let successCount = 0;
 
-    for (const chunk of chunks) {
-      try {
-        const vector = await this.embeddingService.createEmbedding(
-          chunk.content,
-        );
-
-        await this.chunkRepository.saveChunkWithVector({
-          content: chunk.content,
-          vector,
-          documentId,
-        });
-
-        successCount++;
-      } catch (chunkError) {}
+    // 使用分批并行处理，每批最多 5 个并发
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+      const batch = chunks.slice(i, i + BATCH_SIZE);
+      const results = await Promise.allSettled(
+        batch.map(async (chunk) => {
+          const vector = await this.embeddingService.createEmbedding(
+            chunk.content,
+          );
+          await this.chunkRepository.saveChunkWithVector({
+            content: chunk.content,
+            vector,
+            documentId,
+          });
+        }),
+      );
+      successCount += results.filter((r) => r.status === 'fulfilled').length;
     }
 
     await this.documentRepository.update(documentId, {
@@ -514,7 +527,9 @@ export class KnowledgeService {
     if (document.filePath && existsSync(document.filePath)) {
       try {
         unlinkSync(document.filePath);
-      } catch (e) {}
+      } catch (e) {
+        console.error('删除文档文件[%s]失败:', documentId, e);
+      }
     }
 
     await this.documentRepository.delete(documentId);

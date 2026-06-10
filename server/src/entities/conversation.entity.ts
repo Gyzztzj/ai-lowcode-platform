@@ -8,6 +8,7 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { App } from './app.entity';
 import { User } from './user.entity';
@@ -21,9 +22,11 @@ export class Conversation {
   @Column({ default: '新对话' })
   title: string;
 
+  @Index()
   @Column()
   appId: string;
 
+  @Index()
   @Column()
   userId: string;
 

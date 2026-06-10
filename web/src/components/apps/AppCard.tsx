@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { App } from '@/types';
 import { useAppStore } from '@/store/appStore';
+import { useModelStore } from '@/store/modelStore';
 import {
   Card,
   CardContent,
@@ -21,7 +22,8 @@ interface AppCardProps {
 const AppCard = ({ app }: AppCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const { deleteApp, models } = useAppStore();
+  const deleteApp = useAppStore((s) => s.deleteApp);
+  const models = useModelStore((state) => state.models);
 
   const modelName = useMemo(() => {
     const model = models.find((m) => m.id === app.defaultModel);

@@ -1,15 +1,18 @@
-import { create } from "zustand";
-import type { App, Conversation, Message, Model, KnowledgeBase } from "@/types";
-import {
-  appsApi,
-  conversationsApi,
-  modelManagementApi,
-  knowledgeApi,
-} from "@/lib/api-client";
-import { useBuilderStore } from "./builderStore";
+import { create } from 'zustand';
+import type { App, Conversation, Message, Model, KnowledgeBase } from '@/types';
+import { appsApi, conversationsApi, modelManagementApi, knowledgeApi } from '@/lib/api-client';
+import { useBuilderStore } from './builderStore';
+
+/** 统一处理 embeddingModel 的 null 值转换 */
+const normalizeEmbeddingModel = <T extends { embeddingModel: string | null }>(
+  app: T,
+): Omit<T, 'embeddingModel'> & { embeddingModel: string } => ({
+  ...app,
+  embeddingModel: app.embeddingModel === null ? 'none' : app.embeddingModel,
+});
 
 // 本地存储键名
-const STORAGE_KEY = "ai-lowcode-conversations";
+const STORAGE_KEY = 'ai-lowcode-conversations';
 
 // 从本地存储加载会话
 const loadConversations = () => {
@@ -19,7 +22,7 @@ const loadConversations = () => {
     const parsed = JSON.parse(stored);
     return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
-    console.error("Failed to load conversations from localStorage:", e);
+    console.error('Failed to load conversations from localStorage:', e);
     return [];
   }
 };
@@ -121,35 +124,27 @@ export const useAppStore = create<AppState>((set, get) => ({
       let apps: App[] = Array.isArray(result)
         ? result
         : result &&
-            typeof result === "object" &&
-            "data" in result &&
+            typeof result === 'object' &&
+            'data' in result &&
             Array.isArray((result as { data?: unknown }).data)
           ? (result as { data: App[] }).data
           : [];
-      // 将 embeddingModel 的 null 转换为 'none'
-      apps = apps.map((app) => ({
-        ...app,
-        embeddingModel:
-          app.embeddingModel === null ? "none" : app.embeddingModel,
-      }));
+      apps = apps.map(normalizeEmbeddingModel);
       set({
         apps,
         isLoading: false,
         initialized: { ...get().initialized, apps: true },
       });
     } catch (error) {
-      console.error("Failed to fetch apps:", error);
+      console.error('Failed to fetch apps:', error);
       set({ isLoading: false });
     }
   },
 
   createApp: async (app) => {
     const createData = {
-      name: app.name || "新应用",
-      description:
-        app.description !== undefined
-          ? (app.description ?? undefined)
-          : undefined,
+      name: app.name || '新应用',
+      description: app.description !== undefined ? (app.description ?? undefined) : undefined,
       systemPrompt: app.systemPrompt,
       defaultModel: app.defaultModel,
       embeddingModel:
@@ -160,12 +155,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     };
 
     const newApp = await appsApi.create(createData);
-    // 将返回的 embeddingModel 的 null 转换为 'none'
-    const processedApp = {
-      ...newApp,
-      embeddingModel:
-        newApp.embeddingModel === null ? "none" : newApp.embeddingModel,
-    };
+    const processedApp = normalizeEmbeddingModel(newApp);
     set((state) => ({ apps: [processedApp, ...state.apps] }));
     return processedApp;
   },
@@ -183,22 +173,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     }> = {};
     if (app.name !== undefined) updateData.name = app.name;
     if (app.description !== undefined) updateData.description = app.description;
-    if (app.systemPrompt !== undefined)
-      updateData.systemPrompt = app.systemPrompt;
-    if (app.defaultModel !== undefined)
-      updateData.defaultModel = app.defaultModel;
+    if (app.systemPrompt !== undefined) updateData.systemPrompt = app.systemPrompt;
+    if (app.defaultModel !== undefined) updateData.defaultModel = app.defaultModel;
     if (app.embeddingModel !== undefined && app.embeddingModel !== null)
       updateData.embeddingModel = app.embeddingModel;
     if (app.isPublic !== undefined) updateData.isPublic = app.isPublic;
     if (app.nodes !== undefined) updateData.nodes = app.nodes;
     if (app.edges !== undefined) updateData.edges = app.edges;
     const updatedApp = await appsApi.update(id, updateData);
-    // 将返回的 embeddingModel 的 null 转换为 'none'
-    const processedApp = {
-      ...updatedApp,
-      embeddingModel:
-        updatedApp.embeddingModel === null ? "none" : updatedApp.embeddingModel,
-    };
+    const processedApp = normalizeEmbeddingModel(updatedApp);
     set((state) => ({
       apps: state.apps.map((a) => (a.id === id ? processedApp : a)),
       currentApp: state.currentApp?.id === id ? processedApp : state.currentApp,
@@ -245,8 +228,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       let conversations: Conversation[] = Array.isArray(result)
         ? result
         : result &&
-            typeof result === "object" &&
-            "data" in result &&
+            typeof result === 'object' &&
+            'data' in result &&
             Array.isArray((result as { data?: unknown }).data)
           ? (result as { data: Conversation[] }).data
           : [];
@@ -259,7 +242,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         initialized: { ...get().initialized, conversations: true },
       });
     } catch (e) {
-      console.error("Failed to fetch conversations:", e);
+      console.error('Failed to fetch conversations:', e);
       set({
         conversations: loadConversations(),
         initialized: { ...get().initialized, conversations: true },
@@ -287,9 +270,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       return {
         conversations: updatedConversations,
         currentConversation:
-          state.currentConversation?.id === id
-            ? updatedConversation
-            : state.currentConversation,
+          state.currentConversation?.id === id ? updatedConversation : state.currentConversation,
       };
     });
   },
@@ -297,16 +278,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   deleteConversation: async (id) => {
     await conversationsApi.delete(id);
     set((state) => {
-      const updatedConversations = state.conversations.filter(
-        (c) => c.id !== id,
-      );
+      const updatedConversations = state.conversations.filter((c) => c.id !== id);
       saveConversations(updatedConversations);
       return {
         conversations: updatedConversations,
         currentConversation:
-          state.currentConversation?.id === id
-            ? null
-            : state.currentConversation,
+          state.currentConversation?.id === id ? null : state.currentConversation,
         messages: state.currentConversation?.id === id ? [] : state.messages,
       };
     });
@@ -329,7 +306,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const messages = conversation.messages || [];
       set({ messages, isLoadingMessages: false });
     } catch (error) {
-      console.error("Failed to fetch messages:", error);
+      console.error('Failed to fetch messages:', error);
       set({ messages: [], isLoadingMessages: false });
     }
   },
@@ -350,7 +327,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      role: "user",
+      role: 'user',
       content,
       conversationId: currentConversation.id,
       createdAt: new Date().toISOString(),
@@ -361,10 +338,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
 
     try {
-      const response = await conversationsApi.sendMessage(
-        currentConversation.id,
-        { content },
-      );
+      const response = await conversationsApi.sendMessage(currentConversation.id, { content });
 
       set((state) => {
         const updatedMessages = [...state.messages, response.message];
@@ -381,7 +355,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         };
       });
     } catch (error) {
-      console.error("发送消息失败:", error);
+      console.error('发送消息失败:', error);
       set((state) => {
         state.isSending = false;
         const activeConversations = new Map(state.activeConversations);
@@ -411,7 +385,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      role: "user",
+      role: 'user',
       content,
       conversationId: currentConversation.id,
       createdAt: new Date().toISOString(),
@@ -422,28 +396,30 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `/api/conversations/${currentConversation.id}/messages-stream`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ content }),
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/conversations/${currentConversation.id}/messages-stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({ content }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`请求失败: ${response.status}`);
+      }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      let fullContent = "";
+      let fullContent = '';
+      let buffer = '';
 
       const tempMessageId = Date.now().toString();
       const tempMessage: Message = {
         id: tempMessageId,
-        role: "assistant",
-        content: "",
+        role: 'assistant',
+        content: '',
         conversationId: currentConversation.id,
         createdAt: new Date().toISOString(),
       };
@@ -460,9 +436,11 @@ export const useAppStore = create<AppState>((set, get) => ({
             break;
           }
 
-          const chunk = decoder.decode(value, { stream: true });
+          buffer += decoder.decode(value, { stream: true });
 
-          const lines = chunk.split("\n");
+          const lines = buffer.split('\n');
+          // 最后一行可能不完整，保留到下次循环
+          buffer = lines.pop() || '';
 
           let doneReceived = false;
 
@@ -470,10 +448,10 @@ export const useAppStore = create<AppState>((set, get) => ({
             const trimmedLine = line.trim();
             if (!trimmedLine) continue;
 
-            if (trimmedLine.startsWith("data: ")) {
+            if (trimmedLine.startsWith('data: ')) {
               const data = trimmedLine.slice(6).trim();
 
-              if (data === "[DONE]") {
+              if (data === '[DONE]') {
                 doneReceived = true;
                 break;
               }
@@ -481,45 +459,19 @@ export const useAppStore = create<AppState>((set, get) => ({
               try {
                 const parsed = JSON.parse(data);
                 if (parsed.content) {
-                  const calculateDelay = (char: string) => {
-                    const baseDelay = 30;
-                    const punctuationDelay = 200;
-                    const sentenceEndDelay = 500;
-                    const punctuationRegex = /[，。！？；：、]/;
-                    const sentenceEndRegex = /[。！？]/;
+                  fullContent += parsed.content;
 
-                    if (sentenceEndRegex.test(char)) {
-                      return baseDelay + sentenceEndDelay;
-                    } else if (punctuationRegex.test(char)) {
-                      return baseDelay + punctuationDelay;
-                    } else {
-                      return baseDelay;
-                    }
-                  };
-
-                  let currentContent = fullContent;
-                  for (const char of parsed.content) {
-                    currentContent += char;
-
-                    await new Promise((resolve) =>
-                      setTimeout(resolve, calculateDelay(char)),
-                    );
-
-                    set((state) => ({
-                      messages: state.messages.map((msg) =>
-                        msg.id === tempMessageId
-                          ? { ...msg, content: currentContent }
-                          : msg,
-                      ),
-                    }));
-                  }
-
-                  fullContent = currentContent;
+                  // 直接追加内容，不再逐字符 setState
+                  set((state) => ({
+                    messages: state.messages.map((msg) =>
+                      msg.id === tempMessageId ? { ...msg, content: fullContent } : msg,
+                    ),
+                  }));
                 } else if (parsed.error) {
-                  console.error("流式响应错误:", parsed.error);
+                  console.error('流式响应错误:', parsed.error);
                 }
               } catch (e) {
-                console.error("解析流式响应失败:", e);
+                console.error('解析流式响应失败:', e);
               }
             }
           }
@@ -558,7 +510,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
       }
     } catch (error) {
-      console.error("发送消息失败:", error);
+      console.error('发送消息失败:', error);
       set((state) => {
         state.isSending = false;
         const activeConversations = new Map(state.activeConversations);
@@ -580,19 +532,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       const models = await modelManagementApi.getAll();
       set({ models, initialized: { ...get().initialized, models: true } });
     } catch (error) {
-      console.error("Failed to fetch models:", error);
+      console.error('Failed to fetch models:', error);
     }
   },
 
   // --- App by Id ---
   fetchAppById: async (id) => {
-    const app = await appsApi.getById(id);
+    let app = await appsApi.getById(id);
     if (app) {
       if (!Array.isArray(app.nodes)) app.nodes = null;
       if (!Array.isArray(app.edges)) app.edges = null;
-      // 将 embeddingModel 的 null 转换为 'none'
-      app.embeddingModel =
-        app.embeddingModel === null ? "none" : app.embeddingModel;
+      app = normalizeEmbeddingModel(app) as typeof app;
     }
     set((state) => ({
       currentApp: app,
@@ -610,7 +560,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         messages: state.messages.filter((msg) => msg.id !== messageId),
       }));
     } catch (error) {
-      console.error("删除消息失败:", error);
+      console.error('删除消息失败:', error);
     }
   },
 
@@ -636,11 +586,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     // 更新 currentApp，确保数据一致
     if (savedApp) {
-      const processedApp = {
-        ...savedApp,
-        embeddingModel:
-          savedApp.embeddingModel === null ? "none" : savedApp.embeddingModel,
-      };
+      const processedApp = normalizeEmbeddingModel(savedApp);
       set((state) => ({
         currentApp: processedApp,
         apps: state.apps.map((a) => (a.id === id ? processedApp : a)),
@@ -658,8 +604,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       const knowledgeBases: KnowledgeBase[] = Array.isArray(result)
         ? result
         : result &&
-            typeof result === "object" &&
-            "data" in result &&
+            typeof result === 'object' &&
+            'data' in result &&
             Array.isArray((result as { data?: unknown }).data)
           ? (result as { data: KnowledgeBase[] }).data
           : [];
@@ -668,7 +614,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         initialized: { ...get().initialized, knowledgeBases: true },
       });
     } catch (error) {
-      console.error("Failed to fetch knowledge bases:", error);
+      console.error('Failed to fetch knowledge bases:', error);
     }
   },
 
@@ -689,9 +635,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({
       knowledgeBases: state.knowledgeBases.filter((kb) => kb.id !== id),
       currentKnowledgeBase:
-        state.currentKnowledgeBase?.id === id
-          ? null
-          : state.currentKnowledgeBase,
+        state.currentKnowledgeBase?.id === id ? null : state.currentKnowledgeBase,
     }));
   },
 
@@ -706,9 +650,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       return {
         currentKnowledgeBase: {
           ...state.currentKnowledgeBase,
-          documents: state.currentKnowledgeBase.documents?.filter(
-            (doc) => doc.id !== documentId,
-          ),
+          documents: state.currentKnowledgeBase.documents?.filter((doc) => doc.id !== documentId),
         },
       };
     });

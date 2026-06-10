@@ -6,7 +6,10 @@ import { Send } from "lucide-react";
 
 const MessageInput = () => {
   const [content, setContent] = useState("");
-  const { sendMessageStream, activeConversations, currentConversation, currentApp } = useAppStore();
+  const sendMessageStream = useAppStore((s) => s.sendMessageStream);
+  const activeConversations = useAppStore((s) => s.activeConversations);
+  const currentConversation = useAppStore((s) => s.currentConversation);
+  const currentApp = useAppStore((s) => s.currentApp);
   
   // 获取当前会话的发送状态
   const isSending = activeConversations.get(currentConversation?.id || '')?.isSending || false;
